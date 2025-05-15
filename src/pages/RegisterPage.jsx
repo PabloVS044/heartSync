@@ -20,15 +20,34 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 
 // Lista de países para el selector
 const COUNTRIES = [
@@ -91,8 +110,6 @@ export default function RegisterPage() {
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-
-    // Limpiar error específico cuando el usuario corrige el campo
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }
@@ -100,8 +117,6 @@ export default function RegisterPage() {
 
   const handleSelectChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
-
-    // Limpiar error específico
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }
@@ -131,24 +146,61 @@ export default function RegisterPage() {
     }))
   }
 
-  const handlePhotoUpload = (e) => {
+  const uploadToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+  
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      const data = await response.json();
+      if (data.secure_url) {
+        return data.secure_url;
+      } else {
+        throw new Error("Cloudinary upload failed");
+      }
+    } catch (error) {
+      console.error("Error uploading to Cloudinary:", error);
+      throw error;
+    }
+  };
+  
+  
+
+  const handlePhotoUpload = async (e) => {
     const files = e.target.files
     if (files && files.length > 0) {
-      // Crear URLs para previsualización
-      const newPhotos = Array.from(files).map((file) => URL.createObjectURL(file))
+      try {
+        const uploadPromises = Array.from(files).map(async (file) => {
+          const cloudinaryUrl = await uploadToCloudinary(file)
+          return cloudinaryUrl
+        })
+        const uploadedUrls = await Promise.all(uploadPromises)
 
-      setPhotoPreview((prev) => [...prev, ...newPhotos])
+        const newPreviews = Array.from(files).map((file) =>
+          URL.createObjectURL(file)
+        )
 
-      // En un caso real, aquí se subirían las fotos a un servidor
-      // y se guardarían las URLs o IDs en el formData
-      setFormData((prev) => ({
-        ...prev,
-        photos: [...prev.photos, ...Array.from(files).map((file) => file.name)],
-      }))
+        setPhotoPreview((prev) => [...prev, ...newPreviews])
+        setFormData((prev) => ({
+          ...prev,
+          photos: [...prev.photos, ...uploadedUrls],
+        }))
 
-      // Limpiar error si existe
-      if (errors.photos) {
-        setErrors((prev) => ({ ...prev, photos: "" }))
+        if (errors.photos) {
+          setErrors((prev) => ({ ...prev, photos: "" }))
+        }
+      } catch (error) {
+        setErrors((prev) => ({
+          ...prev,
+          photos: "Error al subir las fotos. Inténtalo de nuevo.",
+        }))
       }
     }
   }
@@ -170,26 +222,37 @@ export default function RegisterPage() {
     setIsDraggingPhoto(false)
   }
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault()
     setIsDraggingPhoto(false)
 
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
-      // Crear URLs para previsualización
-      const newPhotos = Array.from(files).map((file) => URL.createObjectURL(file))
+      try {
+        const uploadPromises = Array.from(files).map(async (file) => {
+          const cloudinaryUrl = await uploadToCloudinary(file)
+          return cloudinaryUrl
+        })
+        const uploadedUrls = await Promise.all(uploadPromises)
 
-      setPhotoPreview((prev) => [...prev, ...newPhotos])
+        const newPreviews = Array.from(files).map((file) =>
+          URL.createObjectURL(file)
+        )
 
-      // En un caso real, aquí se subirían las fotos a un servidor
-      setFormData((prev) => ({
-        ...prev,
-        photos: [...prev.photos, ...Array.from(files).map((file) => file.name)],
-      }))
+        setPhotoPreview((prev) => [...prev, ...newPreviews])
+        setFormData((prev) => ({
+          ...prev,
+          photos: [...prev.photos, ...uploadedUrls],
+        }))
 
-      // Limpiar error si existe
-      if (errors.photos) {
-        setErrors((prev) => ({ ...prev, photos: "" }))
+        if (errors.photos) {
+          setErrors((prev) => ({ ...prev, photos: "" }))
+        }
+      } catch (error) {
+        setErrors((prev) => ({
+          ...prev,
+          photos: "Error al subir las fotos. Inténtalo de nuevo.",
+        }))
       }
     }
   }
@@ -197,11 +260,10 @@ export default function RegisterPage() {
   const validateForm = () => {
     const newErrors = {}
 
-    // Validar campos obligatorios
     if (!formData.name.trim()) newErrors.name = "El nombre es obligatorio"
-    if (!formData.surname.trim()) newErrors.surname = "El apellido es obligatorio"
+    if (!formData.surname.trim())
+      newErrors.surname = "El apellido es obligatorio"
 
-    // Validar email con regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!formData.email.trim()) {
       newErrors.email = "El email es obligatorio"
@@ -209,44 +271,36 @@ export default function RegisterPage() {
       newErrors.email = "Ingresa un email válido"
     }
 
-    // Validar contraseña
     if (!formData.password) {
       newErrors.password = "La contraseña es obligatoria"
     } else if (formData.password.length < 6) {
       newErrors.password = "La contraseña debe tener al menos 6 caracteres"
     }
 
-    // Validar confirmación de contraseña
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Las contraseñas no coinciden"
     }
 
-    // Validar edad
     if (!formData.age) {
       newErrors.age = "La edad es obligatoria"
     }
 
-    // Validar país
     if (!formData.country) {
       newErrors.country = "Selecciona tu país"
     }
 
-    // Validar género
     if (!formData.gender) {
       newErrors.gender = "Selecciona tu género"
     }
 
-    // Validar intereses
     if (formData.interests.length === 0) {
       newErrors.interests = "Selecciona al menos un interés"
     }
 
-    // Validar fotos
     if (formData.photos.length === 0) {
       newErrors.photos = "Sube al menos una foto"
     }
 
-    // Validar biografía
     if (!formData.bio.trim()) {
       newErrors.bio = "La biografía es obligatoria"
     } else if (formData.bio.length < 10) {
@@ -264,10 +318,6 @@ export default function RegisterPage() {
       setIsSubmitting(true)
 
       try {
-        // Simulación de envío de datos al servidor
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-
-        // Preparar datos para enviar
         const userData = {
           name: formData.name,
           surname: formData.surname,
@@ -281,12 +331,20 @@ export default function RegisterPage() {
           bio: formData.bio,
           minAgePreference: formData.minAgePreference,
           maxAgePreference: formData.maxAgePreference,
-          createdAt: new Date().toISOString(),
         }
 
-        console.log("Usuario registrado:", userData)
+        const response = await fetch("http://localhost:3000/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        })
 
-        // Redireccionar al usuario
+        if (!response.ok) {
+          throw new Error("Error al registrar el usuario")
+        }
+
         navigate("/login", {
           state: {
             registrationSuccess: true,
@@ -295,14 +353,15 @@ export default function RegisterPage() {
         })
       } catch (error) {
         console.error("Error al registrar:", error)
-        setErrors({ submit: "Ocurrió un error al registrar. Inténtalo de nuevo." })
+        setErrors({
+          submit: "Ocurrió un error al registrar. Inténtalo de nuevo.",
+        })
       } finally {
         setIsSubmitting(false)
       }
     }
   }
 
-  // Determinar si un campo tiene error
   const hasError = (field) => Boolean(errors[field])
 
   return (
@@ -319,16 +378,22 @@ export default function RegisterPage() {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <Card className="border-gray-800 bg-gray-900/50 shadow-xl">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Crear una cuenta</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Crear una cuenta
+            </CardTitle>
             <CardDescription>
-              Completa el formulario para unirte a HeartSync y encontrar conexiones auténticas
+              Completa el formulario para unirte a HeartSync y encontrar
+              conexiones auténticas
             </CardDescription>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               {errors.submit && (
-                <Alert variant="destructive" className="bg-red-900/20 border-red-900 text-red-300">
+                <Alert
+                  variant="destructive"
+                  className="bg-red-900/20 border-red-900 text-red-300"
+                >
                   <AlertDescription>{errors.submit}</AlertDescription>
                 </Alert>
               )}
@@ -343,13 +408,18 @@ export default function RegisterPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name" className={hasError("name") ? "text-red-400" : ""}>
+                      <Label
+                        htmlFor="name"
+                        className={hasError("name") ? "text-red-400" : ""}
+                      >
                         Nombre
                         <span className="text-rose-500 ml-1">*</span>
                       </Label>
                       <div className="relative">
                         <User
-                          className={`absolute left-3 top-3 h-4 w-4 ${hasError("name") ? "text-red-400" : "text-gray-400"}`}
+                          className={`absolute left-3 top-3 h-4 w-4 ${
+                            hasError("name") ? "text-red-400" : "text-gray-400"
+                          }`}
                         />
                         <Input
                           id="name"
@@ -358,21 +428,34 @@ export default function RegisterPage() {
                           onChange={handleChange}
                           placeholder="Tu nombre"
                           className={`pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400 ${
-                            hasError("name") ? "border-red-400 focus-visible:ring-red-400" : ""
+                            hasError("name")
+                              ? "border-red-400 focus-visible:ring-red-400"
+                              : ""
                           }`}
                         />
                       </div>
-                      {hasError("name") && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+                      {hasError("name") && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.name}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="surname" className={hasError("surname") ? "text-red-400" : ""}>
+                      <Label
+                        htmlFor="surname"
+                        className={hasError("surname") ? "text-red-400" : ""}
+                      >
                         Apellido
                         <span className="text-rose-500 ml-1">*</span>
                       </Label>
                       <div className="relative">
                         <User
-                          className={`absolute left-3 top-3 h-4 w-4 ${hasError("surname") ? "text-red-400" : "text-gray-400"}`}
+                          className={`absolute left-3 top-3 h-4 w-4 ${
+                            hasError("surname")
+                              ? "text-red-400"
+                              : "text-gray-400"
+                          }`}
                         />
                         <Input
                           id="surname"
@@ -381,22 +464,33 @@ export default function RegisterPage() {
                           onChange={handleChange}
                           placeholder="Tu apellido"
                           className={`pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400 ${
-                            hasError("surname") ? "border-red-400 focus-visible:ring-red-400" : ""
+                            hasError("surname")
+                              ? "border-red-400 focus-visible:ring-red-400"
+                              : ""
                           }`}
                         />
                       </div>
-                      {hasError("surname") && <p className="text-red-400 text-xs mt-1">{errors.surname}</p>}
+                      {hasError("surname") && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.surname}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className={hasError("email") ? "text-red-400" : ""}>
+                    <Label
+                      htmlFor="email"
+                      className={hasError("email") ? "text-red-400" : ""}
+                    >
                       Correo Electrónico
                       <span className="text-rose-500 ml-1">*</span>
                     </Label>
                     <div className="relative">
                       <Mail
-                        className={`absolute left-3 top-3 h-4 w-4 ${hasError("email") ? "text-red-400" : "text-gray-400"}`}
+                        className={`absolute left-3 top-3 h-4 w-4 ${
+                          hasError("email") ? "text-red-400" : "text-gray-400"
+                        }`}
                       />
                       <Input
                         id="email"
@@ -406,24 +500,37 @@ export default function RegisterPage() {
                         onChange={handleChange}
                         placeholder="tu@email.com"
                         className={`pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400 ${
-                          hasError("email") ? "border-red-400 focus-visible:ring-red-400" : ""
+                          hasError("email")
+                            ? "border-red-400 focus-visible:ring-red-400"
+                            : ""
                         }`}
                       />
                     </div>
-                    {hasError("email") && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+                    {hasError("email") && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="password" className={hasError("password") ? "text-red-400" : ""}>
+                        <Label
+                          htmlFor="password"
+                          className={
+                            hasError("password") ? "text-red-400" : ""
+                          }
+                        >
                           Contraseña
                           <span className="text-rose-500 ml-1">*</span>
                         </Label>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="text-xs text-gray-400 cursor-help">¿Qué debe incluir?</span>
+                              <span className="text-xs text-gray-400 cursor-help">
+                                ¿Qué debe incluir?
+                              </span>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>Mínimo 6 caracteres</p>
@@ -433,7 +540,11 @@ export default function RegisterPage() {
                       </div>
                       <div className="relative">
                         <Lock
-                          className={`absolute left-3 top-3 h-4 w-4 ${hasError("password") ? "text-red-400" : "text-gray-400"}`}
+                          className={`absolute left-3 top-3 h-4 w-4 ${
+                            hasError("password")
+                              ? "text-red-400"
+                              : "text-gray-400"
+                          }`}
                         />
                         <Input
                           id="password"
@@ -443,7 +554,9 @@ export default function RegisterPage() {
                           onChange={handleChange}
                           placeholder="******"
                           className={`pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400 ${
-                            hasError("password") ? "border-red-400 focus-visible:ring-red-400" : ""
+                            hasError("password")
+                              ? "border-red-400 focus-visible:ring-red-400"
+                              : ""
                           }`}
                         />
                         <button
@@ -451,20 +564,37 @@ export default function RegisterPage() {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-3 text-gray-400 hover:text-white"
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
-                      {hasError("password") && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
+                      {hasError("password") && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.password}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className={hasError("confirmPassword") ? "text-red-400" : ""}>
+                      <Label
+                        htmlFor="confirmPassword"
+                        className={
+                          hasError("confirmPassword") ? "text-red-400" : ""
+                        }
+                      >
                         Confirmar Contraseña
                         <span className="text-rose-500 ml-1">*</span>
                       </Label>
                       <div className="relative">
                         <Lock
-                          className={`absolute left-3 top-3 h-4 w-4 ${hasError("confirmPassword") ? "text-red-400" : "text-gray-400"}`}
+                          className={`absolute left-3 top-3 h-4 w-4 ${
+                            hasError("confirmPassword")
+                              ? "text-red-400"
+                              : "text-gray-400"
+                          }`}
                         />
                         <Input
                           id="confirmPassword"
@@ -474,94 +604,148 @@ export default function RegisterPage() {
                           onChange={handleChange}
                           placeholder="******"
                           className={`pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400 ${
-                            hasError("confirmPassword") ? "border-red-400 focus-visible:ring-red-400" : ""
+                            hasError("confirmPassword")
+                              ? "border-red-400 focus-visible:ring-red-400"
+                              : ""
                           }`}
                         />
                         <button
                           type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
                           className="absolute right-3 top-3 text-gray-400 hover:text-white"
                         >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                       {hasError("confirmPassword") && (
-                        <p className="text-red-400 text-xs mt-1">{errors.confirmPassword}</p>
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.confirmPassword}
+                        </p>
                       )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="age" className={hasError("age") ? "text-red-400" : ""}>
+                      <Label
+                        htmlFor="age"
+                        className={hasError("age") ? "text-red-400" : ""}
+                      >
                         Edad
                         <span className="text-rose-500 ml-1">*</span>
                       </Label>
                       <div className="relative">
                         <Calendar
-                          className={`absolute left-3 top-3 h-4 w-4 ${hasError("age") ? "text-red-400" : "text-gray-400"}`}
+                          className={`absolute left-3 top-3 h-4 w-4 ${
+                            hasError("age") ? "text-red-400" : "text-gray-400"
+                          }`}
                         />
-                        <Select value={formData.age} onValueChange={(value) => handleSelectChange("age", value)}>
+                        <Select
+                          value={formData.age}
+                          onValueChange={(value) =>
+                            handleSelectChange("age", value)
+                          }
+                        >
                           <SelectTrigger
                             className={`bg-gray-800/50 border-gray-700 text-white pl-10 ${
-                              hasError("age") ? "border-red-400 focus:ring-red-400" : ""
+                              hasError("age")
+                                ? "border-red-400 focus:ring-red-400"
+                                : ""
                             }`}
                           >
                             <SelectValue placeholder="Selecciona tu edad" />
                           </SelectTrigger>
                           <SelectContent className="bg-white text-gray-900">
-                            {Array.from({ length: 83 }, (_, i) => i + 18).map((age) => (
-                              <SelectItem key={age} value={age.toString()}>
-                                {age} años
-                              </SelectItem>
-                            ))}
+                            {Array.from({ length: 83 }, (_, i) => i + 18).map(
+                              (age) => (
+                                <SelectItem
+                                  key={age}
+                                  value={age.toString()}
+                                >
+                                  {age} años
+                                </SelectItem>
+                              )
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
-                      {hasError("age") && <p className="text-red-400 text-xs mt-1">{errors.age}</p>}
+                      {hasError("age") && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.age}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="country" className={hasError("country") ? "text-red-400" : ""}>
+                      <Label
+                        htmlFor="country"
+                        className={hasError("country") ? "text-red-400" : ""}
+                      >
                         País
                         <span className="text-rose-500 ml-1">*</span>
                       </Label>
                       <div className="relative">
                         <MapPin
-                          className={`absolute left-3 top-3 h-4 w-4 ${hasError("country") ? "text-red-400" : "text-gray-400"}`}
+                          className={`absolute left-3 top-3 h-4 w-4 ${
+                            hasError("country")
+                              ? "text-red-400"
+                              : "text-gray-400"
+                          }`}
                         />
                         <Select
                           value={formData.country}
-                          onValueChange={(value) => handleSelectChange("country", value)}
+                          onValueChange={(value) =>
+                            handleSelectChange("country", value)
+                          }
                         >
                           <SelectTrigger
                             className={`bg-gray-800/50 border-gray-700 text-white pl-10 ${
-                              hasError("country") ? "border-red-400 focus:ring-red-400" : ""
+                              hasError("country")
+                                ? "border-red-400 focus:ring-red-400"
+                                : ""
                             }`}
                           >
                             <SelectValue placeholder="Selecciona tu país" />
                           </SelectTrigger>
                           <SelectContent className="bg-white text-gray-900">
                             {COUNTRIES.map((country) => (
-                              <SelectItem key={country.code} value={country.code}>
+                              <SelectItem
+                                key={country.code}
+                                value={country.code}
+                              >
                                 {country.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-                      {hasError("country") && <p className="text-red-400 text-xs mt-1">{errors.country}</p>}
+                      {hasError("country") && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.country}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="gender" className={hasError("gender") ? "text-red-400" : ""}>
+                      <Label
+                        htmlFor="gender"
+                        className={hasError("gender") ? "text-red-400" : ""}
+                      >
                         Género
                         <span className="text-rose-500 ml-1">*</span>
                       </Label>
                       <RadioGroup
                         id="gender"
                         value={formData.gender}
-                        onValueChange={(value) => handleSelectChange("gender", value)}
+                        onValueChange={(value) =>
+                          handleSelectChange("gender", value)
+                        }
                         className="flex flex-col space-y-2"
                       >
                         <div className="flex items-center space-x-2">
@@ -573,7 +757,11 @@ export default function RegisterPage() {
                           <Label htmlFor="male">Hombre</Label>
                         </div>
                       </RadioGroup>
-                      {hasError("gender") && <p className="text-red-400 text-xs mt-1">{errors.gender}</p>}
+                      {hasError("gender") && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.gender}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -590,7 +778,10 @@ export default function RegisterPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                     {photoPreview.map((photo, index) => (
-                      <div key={index} className="relative aspect-square rounded-md overflow-hidden group">
+                      <div
+                        key={index}
+                        className="relative aspect-square rounded-md overflow-hidden group"
+                      >
                         <img
                           src={photo || "/placeholder.svg"}
                           alt={`Foto ${index + 1}`}
@@ -606,7 +797,6 @@ export default function RegisterPage() {
                       </div>
                     ))}
 
-                    {/* Añadir foto */}
                     <div
                       className={`aspect-square rounded-md border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors ${
                         isDraggingPhoto
@@ -632,10 +822,13 @@ export default function RegisterPage() {
                   />
 
                   <p className="text-xs text-gray-400">
-                    Arrastra y suelta fotos o haz clic para añadir. La primera foto será tu foto principal.
+                    Arrastra y suelta fotos o haz clic para añadir. La primera
+                    foto será tu foto principal.
                   </p>
 
-                  {hasError("photos") && <p className="text-red-400 text-xs">{errors.photos}</p>}
+                  {hasError("photos") && (
+                    <p className="text-red-400 text-xs">{errors.photos}</p>
+                  )}
                 </div>
               </div>
 
@@ -650,7 +843,9 @@ export default function RegisterPage() {
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-2">
                     {AVAILABLE_INTERESTS.map((interest) => {
-                      const isSelected = formData.interests.includes(interest.id)
+                      const isSelected = formData.interests.includes(
+                        interest.id
+                      )
                       return (
                         <Badge
                           key={interest.id}
@@ -660,10 +855,16 @@ export default function RegisterPage() {
                               : "bg-gray-800 hover:bg-gray-700 text-gray-300"
                           }`}
                           onClick={() =>
-                            isSelected ? handleRemoveInterest(interest.id) : handleAddInterest(interest.id)
+                            isSelected
+                              ? handleRemoveInterest(interest.id)
+                              : handleAddInterest(interest.id)
                           }
                         >
-                          {isSelected ? <Check className="h-3 w-3 mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
+                          {isSelected ? (
+                            <Check className="h-3 w-3 mr-1" />
+                          ) : (
+                            <Plus className="h-3 w-3 mr-1" />
+                          )}
                           {interest.name}
                         </Badge>
                       )
@@ -671,10 +872,13 @@ export default function RegisterPage() {
                   </div>
 
                   <p className="text-xs text-gray-400">
-                    Selecciona los intereses que te definen. Esto nos ayudará a encontrar mejores coincidencias.
+                    Selecciona los intereses que te definen. Esto nos ayudará a
+                    encontrar mejores coincidencias.
                   </p>
 
-                  {hasError("interests") && <p className="text-red-400 text-xs">{errors.interests}</p>}
+                  {hasError("interests") && (
+                    <p className="text-red-400 text-xs">{errors.interests}</p>
+                  )}
                 </div>
               </div>
 
@@ -694,16 +898,24 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     placeholder="Cuéntanos sobre ti, tus pasiones y qué buscas..."
                     className={`bg-gray-800/50 border-gray-700 text-white min-h-[120px] ${
-                      hasError("bio") ? "border-red-400 focus-visible:ring-red-400" : ""
+                      hasError("bio")
+                        ? "border-red-400 focus-visible:ring-red-400"
+                        : ""
                     }`}
                   />
 
                   <div className="flex justify-between">
-                    <p className="text-xs text-gray-400">Mínimo 10 caracteres</p>
-                    <p className="text-xs text-gray-400">{formData.bio.length} / 500 caracteres</p>
+                    <p className="text-xs text-gray-400">
+                      Mínimo 10 caracteres
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {formData.bio.length} / 500 caracteres
+                    </p>
                   </div>
 
-                  {hasError("bio") && <p className="text-red-400 text-xs">{errors.bio}</p>}
+                  {hasError("bio") && (
+                    <p className="text-red-400 text-xs">{errors.bio}</p>
+                  )}
                 </div>
               </div>
 
@@ -719,11 +931,17 @@ export default function RegisterPage() {
                     <Label>Rango de edad que buscas</Label>
                     <div className="pt-6 px-2">
                       <Slider
-                        defaultValue={[formData.minAgePreference, formData.maxAgePreference]}
+                        defaultValue={[
+                          formData.minAgePreference,
+                          formData.maxAgePreference,
+                        ]}
                         min={18}
                         max={70}
                         step={1}
-                        value={[formData.minAgePreference, formData.maxAgePreference]}
+                        value={[
+                          formData.minAgePreference,
+                          formData.maxAgePreference,
+                        ]}
                         onValueChange={handleAgeRangeChange}
                         className="mb-6"
                       />
@@ -738,10 +956,19 @@ export default function RegisterPage() {
             </CardContent>
 
             <CardFooter className="flex justify-between border-t border-gray-800 bg-gray-900/30 p-6">
-              <Button type="button" variant="outline" asChild className="border-gray-700 hover:bg-gray-800">
+              <Button
+                type="button"
+                variant="outline"
+                asChild
+                className="border-gray-700 hover:bg-gray-800"
+              >
                 <Link to="/">Cancelar</Link>
               </Button>
-              <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                className="bg-rose-600 hover:bg-rose-700 text-white"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Registrando..." : "Completar Registro"}
               </Button>
             </CardFooter>
@@ -749,8 +976,13 @@ export default function RegisterPage() {
         </Card>
 
         <div className="mt-6 text-center">
-          <span className="text-sm text-gray-400">¿Ya tienes una cuenta? </span>
-          <Link to="/login" className="text-sm text-rose-400 hover:underline">
+          <span className="text-sm text-gray-400">
+            ¿Ya tienes una cuenta?{" "}
+          </span>
+          <Link
+            to="/login"
+            className="text-sm text-rose-400 hover:underline"
+          >
             Inicia sesión
           </Link>
         </div>
