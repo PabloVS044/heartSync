@@ -17,6 +17,7 @@ import {
   Info,
   Check,
   ChevronDown,
+  Globe,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,7 +48,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-
+import { Switch } from "@/components/ui/switch"
 
 // Lista de países para el selector
 const COUNTRIES = [
@@ -98,6 +99,7 @@ export default function RegisterPage() {
     bio: "",
     minAgePreference: 18,
     maxAgePreference: 40,
+    internationalMode: false, // Added internationalMode
   })
 
   const [errors, setErrors] = useState({})
@@ -119,6 +121,13 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
+    }
+  }
+
+  const handleInternationalModeChange = (checked) => {
+    setFormData((prev) => ({ ...prev, internationalMode: checked }))
+    if (errors.internationalMode) {
+      setErrors((prev) => ({ ...prev, internationalMode: "" }))
     }
   }
 
@@ -147,10 +156,10 @@ export default function RegisterPage() {
   }
 
   const uploadToCloudinary = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
-  
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET)
+
     try {
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -158,20 +167,18 @@ export default function RegisterPage() {
           method: "POST",
           body: formData,
         }
-      );
-      const data = await response.json();
+      )
+      const data = await response.json()
       if (data.secure_url) {
-        return data.secure_url;
+        return data.secure_url
       } else {
-        throw new Error("Cloudinary upload failed");
+        throw new Error("Cloudinary upload failed")
       }
     } catch (error) {
-      console.error("Error uploading to Cloudinary:", error);
-      throw error;
+      console.error("Error uploading to Cloudinary:", error)
+      throw error
     }
-  };
-  
-  
+  }
 
   const handlePhotoUpload = async (e) => {
     const files = e.target.files
@@ -331,6 +338,7 @@ export default function RegisterPage() {
           bio: formData.bio,
           minAgePreference: formData.minAgePreference,
           maxAgePreference: formData.maxAgePreference,
+          internationalMode: formData.internationalMode, // Added internationalMode
         }
 
         const response = await fetch("http://localhost:3000/users", {
@@ -341,8 +349,10 @@ export default function RegisterPage() {
           body: JSON.stringify(userData),
         })
 
+        const responseData = await response.json()
+
         if (!response.ok) {
-          throw new Error("Error al registrar el usuario")
+          throw new Error(responseData.error || "Error al registrar el usuario")
         }
 
         navigate("/login", {
@@ -354,7 +364,7 @@ export default function RegisterPage() {
       } catch (error) {
         console.error("Error al registrar:", error)
         setErrors({
-          submit: "Ocurrió un error al registrar. Inténtalo de nuevo.",
+          submit: error.message || "Ocurrió un error al registrar. Inténtalo de nuevo.",
         })
       } finally {
         setIsSubmitting(false)
@@ -769,7 +779,7 @@ export default function RegisterPage() {
 
               {/* Sección: Fotos */}
               <div>
-                <h3 className="text-lg font-medium mb-4 flex items-center">
+                <h3 className="text-lg font-medium mb-4 glossy flex items-center">
                   <Camera className="h-5 w-5 mr-2 text-rose-500" />
                   Fotos
                   <span className="text-rose-500 ml-1">*</span>
@@ -923,7 +933,7 @@ export default function RegisterPage() {
               <div>
                 <h3 className="text-lg font-medium mb-4 flex items-center">
                   <ChevronDown className="h-5 w-5 mr-2 text-rose-500" />
-                  Preferencias de edad
+                  Preferencias
                 </h3>
 
                 <div className="space-y-6">
@@ -950,6 +960,53 @@ export default function RegisterPage() {
                         <span>{formData.maxAgePreference} años</span>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label
+                        htmlFor="internationalMode"
+                        className={hasError("internationalMode") ? "text-red-400" : ""}
+                      >
+                        Modo Internacional
+                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs text-gray-400 cursor-help">
+                              ¿Qué es esto?
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              Habilita esta opción para buscar coincidencias en
+                              otros países además del tuyo.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="internationalMode"
+                        checked={formData.internationalMode}
+                        onCheckedChange={handleInternationalModeChange}
+                      />
+                      <Label
+                        htmlFor="internationalMode"
+                        className="flex items-center text-gray-300"
+                      >
+                        <Globe className="h-4 w-4 mr-2" />
+                        {formData.internationalMode
+                          ? "Buscar globalmente"
+                          : "Buscar en mi país"}
+                      </Label>
+                    </div>
+                    {hasError("internationalMode") && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {errors.internationalMode}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
