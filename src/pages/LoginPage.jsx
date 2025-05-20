@@ -1,56 +1,183 @@
 "use client"
 
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { Heart, Mail, Lock, Eye, EyeOff, Facebook, Apple } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { Heart, Mail, Lock, Eye, EyeOff, Facebook } from "lucide-react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Separator } from "../components/ui/separator"
+import axios from "axios"
+import Swal from "sweetalert2"
+import "animate.css"
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  // Verificar si viene de un registro exitoso
+  useEffect(() => {
+    if (location.state?.registrationSuccess) {
+      setEmail(location.state.email || "")
+
+      // Mostrar mensaje de bienvenida
+      Swal.fire({
+        title: "¡Bienvenido/a a HeartSync!",
+        text: "Tu cuenta ha sido creada exitosamente. Inicia sesión para comenzar.",
+        icon: "success",
+        confirmButtonText: "Continuar",
+        confirmButtonColor: "#f43f5e",
+        background: "#1f2937",
+        color: "#ffffff",
+        iconColor: "#f43f5e",
+        showClass: {
+          popup: "animate__animated animate__fadeInDown",
+        },
+        hideClass: {
+          popup: "animate__animated animate__fadeOutUp",
+        },
+      })
+    }
+  }, [location.state])
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!email || !password) {
       setError("Por favor, completa todos los campos")
       return
     }
-    console.log("Logging in with:", { email, password })
-    navigate("/descubrir")
+
+    setIsLoading(true)
+
+    try {
+      // Make POST request to login endpoint
+      const response = await axios.post("http://localhost:3000/users/login", {
+        email,
+        password,
+      })
+
+      // Extract token and userId from response
+      const { token, userId } = response.data
+
+      // Store token and userId in localStorage
+      localStorage.setItem("authToken", token)
+      localStorage.setItem("userId", userId)
+
+      // Clear error
+      setError("")
+
+      // Mostrar SweetAlert de inicio de sesión exitoso
+      await Swal.fire({
+        title: "¡Inicio de sesión exitoso!",
+        text: "Bienvenido/a de nuevo a HeartSync",
+        icon: "success",
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        background: "#1f2937",
+        color: "#ffffff",
+        iconColor: "#f43f5e",
+        showClass: {
+          popup: "animate__animated animate__fadeInDown",
+        },
+        hideClass: {
+          popup: "animate__animated animate__fadeOutUp",
+        },
+      })
+
+      // Navegar a la página de descubrimiento
+      navigate("/descubrir")
+    } catch (error) {
+      // Handle backend errors (e.g., "User not found", "Incorrect password")
+      const errorMessage = error.response?.data?.error || "Error al iniciar sesión. Inténtalo de nuevo."
+      setError(errorMessage)
+
+      // Mostrar SweetAlert de error
+      Swal.fire({
+        title: "Error de inicio de sesión",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonText: "Intentar de nuevo",
+        confirmButtonColor: "#f43f5e",
+        background: "#1f2937",
+        color: "#ffffff",
+        iconColor: "#f43f5e",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleSocialLogin = (provider) => {
-    console.log(`Logging in with ${provider}`)
-    navigate("/descubrir")
+  const handleSocialLogin = async (provider) => {
+    try {
+      // Simulación de inicio de sesión con redes sociales
+      setIsLoading(true)
+
+      // Esperar un poco para simular la carga
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Mostrar SweetAlert de inicio de sesión exitoso
+      await Swal.fire({
+        title: `Iniciando sesión con ${provider}`,
+        text: "Conectando con tu cuenta...",
+        icon: "info",
+        timer: 1500,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        background: "#1f2937",
+        color: "#ffffff",
+        iconColor: "#f43f5e",
+      })
+
+      // Navegar a la página de descubrimiento
+      navigate("/descubrir")
+    } catch (error) {
+      console.error(`Error al iniciar sesión con ${provider}:`, error)
+
+      Swal.fire({
+        title: "Error de conexión",
+        text: `No se pudo iniciar sesión con ${provider}. Inténtalo de nuevo.`,
+        icon: "error",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#f43f5e",
+        background: "#1f2937",
+        color: "#ffffff",
+        iconColor: "#f43f5e",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-rose-950 text-white flex flex-col">
-      <header className="p-4">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,0,128,0.1),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(255,0,128,0.05),transparent_50%)] pointer-events-none"></div>
+
+      <header className="p-4 relative z-10">
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 bg-rose-600 rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-rose-700 rounded-full flex items-center justify-center shadow-lg">
             <Heart className="h-5 w-5 text-white" fill="white" />
           </div>
-          <span className="font-semibold text-lg">HeartSync</span>
+          <span className="font-semibold text-xl">HeartSync</span>
         </Link>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4">
-        <Card className="w-full max-w-sm bg-gray-900/40 backdrop-blur-sm border-none shadow-2xl">
-          <CardHeader className="space-y-1 pb-4">
+      <main className="flex-1 flex items-center justify-center px-4 relative z-10">
+        <Card className="w-full max-w-sm bg-gray-900/40 backdrop-blur-sm border-gray-800 shadow-2xl">
+          <CardHeader className="space-y-1 pb-4 border-b border-gray-800">
             <CardTitle className="text-xl font-semibold text-center">Inicia Sesión</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
             <div className="grid grid-cols-1 gap-3">
               <Button
                 onClick={() => handleSocialLogin("Google")}
                 className="w-full bg-white text-gray-900 hover:bg-gray-100 transition-colors"
+                disabled={isLoading}
               >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
@@ -75,6 +202,7 @@ export default function LoginPage() {
               <Button
                 onClick={() => handleSocialLogin("Facebook")}
                 className="w-full bg-blue-600 hover:bg-blue-700 transition-colors"
+                disabled={isLoading}
               >
                 <Facebook className="mr-2 h-4 w-4" />
                 Continua con Facebook
@@ -92,9 +220,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="bg-rose-500/20 text-rose-300 px-3 py-2 rounded text-sm text-center">
-                  {error}
-                </div>
+                <div className="bg-rose-500/20 text-rose-300 px-3 py-2 rounded text-sm text-center">{error}</div>
               )}
 
               <div className="relative">
@@ -105,6 +231,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Correo Electrónico"
                   className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:ring-rose-500 focus:border-rose-500 transition-all"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -116,11 +243,13 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Contraseña"
                   className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:ring-rose-500 focus:border-rose-500 transition-all"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-2.5 text-gray-500 hover:text-white transition-colors"
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -129,8 +258,9 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full bg-rose-600 hover:bg-rose-700 transition-colors"
+                disabled={isLoading}
               >
-                Iniciar Sesión
+                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </Button>
             </form>
 
@@ -148,6 +278,30 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Estilos para SweetAlert2 */}
+      <style jsx global>{`
+        .swal2-popup {
+          border-radius: 1rem;
+        }
+        
+        .swal2-title {
+          font-weight: 600;
+        }
+        
+        .swal2-confirm {
+          font-weight: 500 !important;
+          border-radius: 0.375rem !important;
+        }
+        
+        .swal2-icon {
+          border-color: #f43f5e !important;
+        }
+        
+        .swal2-timer-progress-bar {
+          background: rgba(244, 63, 94, 0.5) !important;
+        }
+      `}</style>
     </div>
   )
 }
