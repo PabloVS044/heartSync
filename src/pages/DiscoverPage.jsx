@@ -1,266 +1,288 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Heart,
-  X,
-  Star,
-  Info,
-  ExternalLink,
-  ThumbsUp,
-  Coffee,
-  Music,
-  Book,
-  Film,
-  Plane,
-  MapPin,
-  Sparkles,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react"
+import { Heart, X, Star, Info, ExternalLink, ThumbsUp, Coffee, Music, Book, Film, Plane, MapPin, Sparkles, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toasts"
 import Navbar from "@/components/navbar"
-
-// Datos simulados - En producción vendrían de Neo4J
-const MATCHES = [
-  {
-    id: 1,
-    name: "Elena",
-    age: 42,
-    location: "Madrid, España",
-    bio: "Profesora de yoga y amante de los viajes. Busco a alguien con quien compartir nuevas experiencias.",
-    distance: "5 km",
-    compatibility: 92,
-    images: [
-      "/placeholder.svg?height=500&width=400&text=Elena",
-      "/placeholder.svg?height=500&width=400&text=Elena+2",
-      "/placeholder.svg?height=500&width=400&text=Elena+3",
-    ],
-    interests: ["yoga", "viajes", "gastronomía", "cine", "senderismo"],
-    commonInterests: ["viajes", "cine"],
-    commonAttributes: {
-      country: "España",
-      musicTaste: "Jazz, Clásica",
-      activityLevel: "Activo",
-    },
-  },
-  {
-    id: 2,
-    name: "Sofía",
-    age: 45,
-    location: "Barcelona, España",
-    bio: "Ejecutiva de marketing, apasionada por el arte y la música. Me encanta cocinar y descubrir nuevos restaurantes.",
-    distance: "12 km",
-    compatibility: 88,
-    images: ["/placeholder.svg?height=500&width=400&text=Sofia", "/placeholder.svg?height=500&width=400&text=Sofia+2"],
-    interests: ["arte", "música", "cocina", "vino", "teatro"],
-    commonInterests: ["música", "cocina"],
-    commonAttributes: {
-      country: "España",
-      musicTaste: "Jazz, Rock",
-      foodPreference: "Mediterránea",
-    },
-  },
-  {
-    id: 3,
-    name: "Carmen",
-    age: 39,
-    location: "Valencia, España",
-    bio: "Arquitecta y viajera incansable. Busco a alguien con quien compartir conversaciones interesantes y aventuras.",
-    distance: "8 km",
-    compatibility: 95,
-    images: [
-      "/placeholder.svg?height=500&width=400&text=Carmen",
-      "/placeholder.svg?height=500&width=400&text=Carmen+2",
-      "/placeholder.svg?height=500&width=400&text=Carmen+3",
-    ],
-    interests: ["arquitectura", "viajes", "fotografía", "lectura", "natación"],
-    commonInterests: ["viajes", "fotografía", "lectura"],
-    commonAttributes: {
-      country: "España",
-      bookGenre: "Novela histórica",
-      activityLevel: "Activo",
-    },
-  },
-]
-
-// Datos simulados de publicidad - En producción vendrían de una API
-const ADS = [
-  {
-    id: 1,
-    title: "Escapada romántica a Santorini",
-    image: "/placeholder.svg?height=600&width=160&text=Viajes",
-    description: "Descubre el paraíso griego con ofertas exclusivas para parejas.",
-    targetedReason: "Basado en tu interés por los viajes y experiencias románticas.",
-    url: "https://example.com/santorini",
-    relatedInterests: ["viajes", "romance"],
-  },
-  {
-    id: 2,
-    title: "Festival de Jazz en el Parque",
-    image: "/placeholder.svg?height=600&width=160&text=Música",
-    description: "No te pierdas el evento musical del año con los mejores artistas.",
-    targetedReason: "Personalizado según tu gusto por el jazz y eventos culturales.",
-    url: "https://example.com/jazzfestival",
-    relatedInterests: ["música", "jazz", "eventos"],
-  },
-  {
-    id: 3,
-    title: "Clases de cocina mediterránea",
-    image: "/placeholder.svg?height=600&width=160&text=Cocina",
-    description: "Aprende a preparar platos exquisitos con los mejores chefs.",
-    targetedReason: "Seleccionado por tu interés en la gastronomía y cocina mediterránea.",
-    url: "https://example.com/cookingclass",
-    relatedInterests: ["cocina", "gastronomía"],
-  },
-  {
-    id: 4,
-    title: "Club de lectura virtual",
-    image: "/placeholder.svg?height=600&width=160&text=Lectura",
-    description: "Únete a nuestra comunidad de amantes de los libros.",
-    targetedReason: "Recomendado por tu afición a la lectura y novelas históricas.",
-    url: "https://example.com/bookclub",
-    relatedInterests: ["lectura", "libros"],
-  },
-]
+import axios from "axios"
+import { useNavigate } from "react-router-dom"
 
 export default function DiscoverPage() {
-  const [currentMatchIndex, setCurrentMatchIndex] = useState(0)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [direction, setDirection] = useState(null)
-  const [leftAds, setLeftAds] = useState([])
-  const [rightAds, setRightAds] = useState([])
-  const [adModalOpen, setAdModalOpen] = useState(false)
-  const [selectedAd, setSelectedAd] = useState(null)
-  const [likeAnimation, setLikeAnimation] = useState(false)
-  const [dislikeAnimation, setDislikeAnimation] = useState(false)
-  const [superlikeAnimation, setSuperlikeAnimation] = useState(false)
+  const [matches, setMatches] = useState([]);
+  const [ads, setAds] = useState([]);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [direction, setDirection] = useState(null);
+  const [leftAds, setLeftAds] = useState([]);
+  const [rightAds, setRightAds] = useState([]);
+  const [adModalOpen, setAdModalOpen] = useState(false);
+  const [selectedAd, setSelectedAd] = useState(null);
+  const [likeAnimation, setLikeAnimation] = useState(false);
+  const [dislikeAnimation, setDislikeAnimation] = useState(false);
+  const [superlikeAnimation, setSuperlikeAnimation] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const { toast } = useToast()
+  const userId = localStorage.getItem("userId");
+  const currentMatch = matches[currentMatchIndex];
 
-  const currentMatch = MATCHES[currentMatchIndex]
-
-  // Efecto para seleccionar anuncios relevantes basados en los intereses del match actual
+  // Fetch matches and ads on component mount
   useEffect(() => {
-    if (currentMatch) {
-      // Filtrar anuncios relevantes basados en los intereses del usuario y el match
-      const relevantAds = ADS.filter((ad) =>
-        ad.relatedInterests.some(
-          (interest) => currentMatch.interests.includes(interest) || currentMatch.commonInterests.includes(interest),
-        ),
-      )
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token || !userId) {
+          toast({
+            title: "Sesión expirada",
+            description: "Por favor, inicia sesión nuevamente.",
+            variant: "destructive"
+          });
+          navigate("/login");
+          return;
+        }
 
-      // Dividir los anuncios entre izquierda y derecha
-      const shuffled = [...relevantAds].sort(() => 0.5 - Math.random())
-      setLeftAds(shuffled.slice(0, 2))
-      setRightAds(shuffled.slice(2, 4))
+        // Fetch matches
+        const matchesResponse = await axios.get(`http://localhost:3000/users/${userId}/matches`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { skip: 0, limit: 10 }
+        });
+        const transformedMatches = matchesResponse.data.map(match => ({
+          id: match.id,
+          name: match.name,
+          age: match.age,
+          location: match.country,
+          bio: match.bio || "Sin biografía",
+          distance: "Desconocido",
+          compatibility: Math.min(80 + match.sharedInterests * 5, 95),
+          images: match.photos.length > 0 ? match.photos : ["/placeholder.svg?height=500&width=400"],
+          interests: match.interests || [],
+          commonInterests: match.interests || [],
+          commonAttributes: {
+            country: match.country,
+            activityLevel: match.interests.includes("senderismo") || match.interests.includes("natación") ? "Activo" : "Moderado"
+          },
+          matchType: match.matchType
+        }));
+        setMatches(transformedMatches);
+
+        // Fetch ads (fallback to static if /ads fails)
+        try {
+          const adsResponse = await axios.get("http://localhost:3000/ads", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setAds(adsResponse.data);
+        } catch (adError) {
+          console.warn("Failed to fetch ads, using static ads:", adError.message);
+          setAds([
+            {
+              id: 1,
+              title: "Escapada romántica a Santorini",
+              image: "/placeholder.svg?height=600&width=160&text=Viajes",
+              description: "Descubre el paraíso griego con ofertas exclusivas para parejas.",
+              targetedReason: "Basado en tu interés por los viajes y experiencias románticas.",
+              url: "https://example.com/santorini",
+              relatedInterests: ["viajes", "romance"]
+            },
+            // Add more static ads if needed
+          ]);
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching matches:", error.response?.data || error.message);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los datos. Inténtalo de nuevo.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          navigate("/login");
+        }
+      }
+    };
+    fetchData();
+  }, [navigate, toast, userId]);
+
+  // Filter ads based on current match interests
+  useEffect(() => {
+    if (currentMatch && ads.length > 0) {
+      const relevantAds = ads.filter((ad) =>
+        ad.relatedInterests.some(
+          (interest) => currentMatch.interests.includes(interest.toLowerCase()) || currentMatch.commonInterests.includes(interest.toLowerCase())
+        )
+      );
+      const shuffled = [...relevantAds].sort(() => 0.5 - Math.random());
+      setLeftAds(shuffled.slice(0, 2));
+      setRightAds(shuffled.slice(2, 4));
     }
-  }, [currentMatch])
+  }, [currentMatch, ads]);
 
   const handleNextImage = () => {
-    if (currentMatch.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev + 1) % currentMatch.images.length)
+    if (currentMatch?.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % currentMatch.images.length);
     }
-  }
+  };
 
   const handlePrevImage = () => {
-    if (currentMatch.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev === 0 ? currentMatch.images.length - 1 : prev - 1))
+    if (currentMatch?.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev === 0 ? currentMatch.images.length - 1 : prev - 1));
     }
-  }
+  };
 
-  const handleLike = () => {
-    setLikeAnimation(true)
-    setDirection("right")
+  const handleLike = async () => {
+    if (!currentMatch) return;
+    setLikeAnimation(true);
+    setDirection("right");
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.post(
+        `http://localhost:3000/users/${userId}/like/${currentMatch.id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast({
+        title: response.data.isMatched ? "¡Match!" : "¡Like enviado!",
+        description: response.data.isMatched
+          ? `¡Has hecho match con ${currentMatch.name}!`
+          : `Has dado like a ${currentMatch.name}`,
+        variant: "success"
+      });
+      setTimeout(() => {
+        setLikeAnimation(false);
+        nextMatch();
+      }, 1000);
+    } catch (error) {
+      console.error("Error liking user:", error.response?.data || error.message);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar el like. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+      setLikeAnimation(false);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        navigate("/login");
+      }
+    }
+  };
 
-    // Mostrar toast
-    toast({
-      title: "¡Like enviado!",
-      description: `Has dado like a ${currentMatch.name}`,
-      variant: "success",
-    })
+  const handleDislike = async () => {
+    if (!currentMatch) return;
+    setDislikeAnimation(true);
+    setDirection("left");
+    try {
+      const token = localStorage.getItem("authToken");
+      await axios.post(
+        `http://localhost:3000/users/${userId}/dislike/${currentMatch.id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast({
+        description: `Has pasado de ${currentMatch.name}`,
+      });
+      setTimeout(() => {
+        setDislikeAnimation(false);
+        nextMatch();
+      }, 1000);
+    } catch (error) {
+      console.error("Error disliking user:", error.response?.data || error.message);
+      toast({
+        title: "Error",
+        description: "No se pudo pasar del usuario. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+      setDislikeAnimation(false);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        navigate("/login");
+      }
+    }
+  };
 
-    // Resetear animación después de un tiempo
-    setTimeout(() => {
-      setLikeAnimation(false)
-      nextMatch()
-    }, 1000)
-  }
-
-  const handleDislike = () => {
-    setDislikeAnimation(true)
-    setDirection("left")
-
-    // Mostrar toast
-    toast({
-      description: `Has pasado de ${currentMatch.name}`,
-    })
-
-    // Resetear animación después de un tiempo
-    setTimeout(() => {
-      setDislikeAnimation(false)
-      nextMatch()
-    }, 1000)
-  }
-
-  const handleSuperlike = () => {
-    setSuperlikeAnimation(true)
-
-    // Mostrar toast
-    toast({
-      title: "¡Super Like!",
-      description: `Has enviado un Super Like a ${currentMatch.name}`,
-      variant: "success",
-    })
-
-    // Resetear animación después de un tiempo
-    setTimeout(() => {
-      setSuperlikeAnimation(false)
-      nextMatch()
-    }, 1000)
-  }
+  const handleSuperlike = async () => {
+    if (!currentMatch) return;
+    setSuperlikeAnimation(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.post(
+        `http://localhost:3000/users/${userId}/like/${currentMatch.id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast({
+        title: response.data.isMatched ? "¡Match!" : "¡Super Like enviado!",
+        description: response.data.isMatched
+          ? `¡Has hecho match con ${currentMatch.name}!`
+          : `Has enviado un Super Like a ${currentMatch.name}`,
+        variant: "success"
+      });
+      setTimeout(() => {
+        setSuperlikeAnimation(false);
+        nextMatch();
+      }, 1000);
+    } catch (error) {
+      console.error("Error superliking user:", error.response?.data || error.message);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar el Super Like. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+      setSuperlikeAnimation(false);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        navigate("/login");
+      }
+    }
+  };
 
   const nextMatch = () => {
-    setCurrentImageIndex(0)
-    setCurrentMatchIndex((prev) => (prev + 1) % MATCHES.length)
-  }
+    setCurrentImageIndex(0);
+    setCurrentMatchIndex((prev) => (prev + 1) % matches.length || 0);
+  };
 
   const handleAdClick = (ad) => {
-    setSelectedAd(ad)
-    setAdModalOpen(true)
+    setSelectedAd(ad);
+    setAdModalOpen(true);
+  };
+
+  const getInterestIcon = (interest) => {
+    const iconProps = { className: "h-4 w-4" }; // Explicit props to avoid stray attributes
+    switch (interest.toLowerCase()) {
+      case "viajes": return <Plane {...iconProps} />;
+      case "música": return <Music {...iconProps} />;
+      case "cocina": return <Coffee {...iconProps} />;
+      case "lectura": return <Book {...iconProps} />;
+      case "cine": return <Film {...iconProps} />;
+      default: return <ThumbsUp {...iconProps} />;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
+        <p>Cargando matches...</p>
+      </div>
+    );
   }
 
-  // Iconos para intereses
-  const getInterestIcon = (interest) => {
-    switch (interest.toLowerCase()) {
-      case "viajes":
-        return <Plane className="h-4 w-4" />
-      case "música":
-        return <Music className="h-4 w-4" />
-      case "cocina":
-        return <Coffee className="h-4 w-4" />
-      case "lectura":
-        return <Book className="h-4 w-4" />
-      case "cine":
-        return <Film className="h-4 w-4" />
-      default:
-        return <ThumbsUp className="h-4 w-4" />
-    }
+  if (!currentMatch) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
+        <p>No hay más matches disponibles.</p>
+      </div>
+    );
   }
 
   return (
-    
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6 text-center">Descubre tus Matches</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Columna izquierda - Anuncios */}
           <div className="hidden lg:block lg:col-span-2">
             <div className="space-y-4">
               {leftAds.map((ad) => (
@@ -286,7 +308,6 @@ export default function DiscoverPage() {
             </div>
           </div>
 
-          {/* Columna central - Match actual */}
           <div className="lg:col-span-8">
             <div
               className={`transition-all duration-500 ${
@@ -299,7 +320,6 @@ export default function DiscoverPage() {
             >
               <Card className="overflow-hidden border-gray-800 bg-gray-900/50 shadow-xl">
                 <div className="relative">
-                  {/* Indicadores de imagen */}
                   {currentMatch.images.length > 1 && (
                     <div className="absolute top-4 left-0 right-0 z-10 flex justify-center gap-1">
                       {currentMatch.images.map((_, index) => (
@@ -311,21 +331,18 @@ export default function DiscoverPage() {
                     </div>
                   )}
 
-                  {/* Imagen principal */}
                   <div className="relative h-[500px]">
                     <img
                       src={currentMatch.images[currentImageIndex] || "/placeholder.svg"}
-                      alt={currentMatch.name}
+                      alt={ad.title}
                       className="h-full w-full object-cover"
                     />
 
-                    {/* Overlay de compatibilidad */}
                     <div className="absolute top-4 right-4 bg-rose-600/90 text-white rounded-full px-3 py-1 text-sm font-semibold flex items-center">
                       <Sparkles className="h-4 w-4 mr-1" />
                       {currentMatch.compatibility}% Match
                     </div>
 
-                    {/* Navegación de imágenes */}
                     {currentMatch.images.length > 1 && (
                       <>
                         <button
@@ -343,7 +360,6 @@ export default function DiscoverPage() {
                       </>
                     )}
 
-                    {/* Overlay de información */}
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
                       <h2 className="text-2xl font-bold">
                         {currentMatch.name}, {currentMatch.age}
@@ -356,7 +372,6 @@ export default function DiscoverPage() {
                       </div>
                     </div>
 
-                    {/* Animaciones de like/dislike */}
                     {likeAnimation && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="bg-green-500/30 backdrop-blur-sm rounded-full p-8">
@@ -384,10 +399,8 @@ export default function DiscoverPage() {
                 </div>
 
                 <CardContent className="p-6">
-                  {/* Bio */}
                   <p className="text-gray-300 mb-4">{currentMatch.bio}</p>
 
-                  {/* Sección de coincidencias */}
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
                       <Sparkles className="h-5 w-5 mr-2 text-rose-500" />
@@ -395,7 +408,6 @@ export default function DiscoverPage() {
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Intereses comunes */}
                       <div className="bg-gray-800/50 rounded-lg p-4">
                         <h4 className="text-sm font-medium text-gray-300 mb-2">Intereses en común</h4>
                         <div className="flex flex-wrap gap-2">
@@ -411,7 +423,6 @@ export default function DiscoverPage() {
                         </div>
                       </div>
 
-                      {/* Atributos comunes */}
                       <div className="bg-gray-800/50 rounded-lg p-4">
                         <h4 className="text-sm font-medium text-gray-300 mb-2">Otras coincidencias</h4>
                         <ul className="space-y-2 text-sm">
@@ -427,7 +438,6 @@ export default function DiscoverPage() {
                     </div>
                   </div>
 
-                  {/* Todos los intereses */}
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Intereses</h3>
                     <div className="flex flex-wrap gap-2">
@@ -449,33 +459,31 @@ export default function DiscoverPage() {
                 </CardContent>
               </Card>
 
-              {/* Botones de acción */}
               <div className="flex justify-center mt-6 gap-4">
-                <button
+                <Button
                   className="bg-red-500 hover:bg-red-600 text-white rounded-full p-4 shadow-lg transition-transform duration-300 hover:scale-110 active:scale-90"
                   onClick={handleDislike}
                 >
                   <X className="h-8 w-8" />
-                </button>
+                </Button>
 
-                <button
+                <Button
                   className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-transform duration-300 hover:scale-110 active:scale-90"
                   onClick={handleSuperlike}
                 >
                   <Star className="h-8 w-8" />
-                </button>
+                </Button>
 
-                <button
+                <Button
                   className="bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg transition-transform duration-300 hover:scale-110 active:scale-90"
                   onClick={handleLike}
                 >
                   <Heart className="h-8 w-8" />
-                </button>
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* Columna derecha - Anuncios */}
           <div className="hidden lg:block lg:col-span-2">
             <div className="space-y-4">
               {rightAds.map((ad) => (
@@ -503,7 +511,6 @@ export default function DiscoverPage() {
         </div>
       </div>
 
-      {/* Modal de publicidad */}
       <Dialog open={adModalOpen} onOpenChange={setAdModalOpen}>
         <DialogContent className="bg-gray-900 border-gray-800 text-white">
           <DialogHeader>
