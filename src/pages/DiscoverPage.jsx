@@ -334,7 +334,7 @@ export default function DiscoverPage() {
                   <div className="relative h-[500px]">
                     <img
                       src={currentMatch.images[currentImageIndex] || "/placeholder.svg"}
-                      alt={ad.title}
+                      alt="hola"
                       className="h-full w-full object-cover"
                     />
 
