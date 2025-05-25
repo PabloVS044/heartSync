@@ -32,7 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { motion, AnimatePresence } from "framer-motion"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toasts"
 import Navbar from "@/components/navbar"
 
 // Datos simulados - En producción vendrían de Neo4J

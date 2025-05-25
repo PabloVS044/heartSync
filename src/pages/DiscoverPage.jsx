@@ -17,8 +17,8 @@ export default function DiscoverPage() {
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [direction, setDirection] = useState(null);
-  const [leftAds, setLeftAds] = useState([]);
-  const [rightAds, setRightAds] = useState([]);
+  const [leftAd, setLeftAd] = useState(null);
+  const [rightAd, setRightAd] = useState(null);
   const [adModalOpen, setAdModalOpen] = useState(false);
   const [selectedAd, setSelectedAd] = useState(null);
   const [likeAnimation, setLikeAnimation] = useState(false);
@@ -31,7 +31,7 @@ export default function DiscoverPage() {
   const userId = localStorage.getItem("userId");
   const currentMatch = matches[currentMatchIndex];
 
-  // Fetch matches and ads on component mount
+  // Fetch matches and personalized ads on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -58,7 +58,7 @@ export default function DiscoverPage() {
           location: match.country,
           bio: match.bio || "Sin biografía",
           distance: "Desconocido",
-          compatibility: Math.min(80 + match.sharedInterests * 5, 95),
+          Compatibility: Math.min(80 + match.sharedInterests * 5, 95),
           images: match.photos.length > 0 ? match.photos : ["/placeholder.svg?height=500&width=400"],
           interests: match.interests || [],
           commonInterests: match.interests || [],
@@ -70,31 +70,29 @@ export default function DiscoverPage() {
         }));
         setMatches(transformedMatches);
 
-        // Fetch ads (fallback to static if /ads fails)
-        try {
-          const adsResponse = await axios.get("http://localhost:3000/ads", {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setAds(adsResponse.data);
-        } catch (adError) {
-          console.warn("Failed to fetch ads, using static ads:", adError.message);
-          setAds([
-            {
-              id: 1,
-              title: "Escapada romántica a Santorini",
-              image: "/placeholder.svg?height=600&width=160&text=Viajes",
-              description: "Descubre el paraíso griego con ofertas exclusivas para parejas.",
-              targetedReason: "Basado en tu interés por los viajes y experiencias románticas.",
-              url: "https://example.com/santorini",
-              relatedInterests: ["viajes", "romance"]
-            },
-            // Add more static ads if needed
-          ]);
-        }
+        // Fetch personalized ads for the user
+        const adsResponse = await axios.get(`http://localhost:3000/ads/user/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { skip: 0, limit: 2 } // Fetch only 2 ads
+        });
+        const fetchedAds = adsResponse.data.map(ad => ({
+          id: ad.id,
+          title: ad.title,
+          image: ad.image || "/placeholder.svg?height=600&width=160&text=Anuncio",
+          description: ad.description,
+          targetedReason: `Basado en tu interés por ${ad.relatedInterests?.join(", ") || "temas relacionados"}.`,
+          url: ad.url || "https://example.com",
+          relatedInterests: ad.relatedInterests || []
+        }));
+        
+        // Set one ad for each side
+        setLeftAd(fetchedAds[0] || null);
+        setRightAd(fetchedAds[1] || null);
+        setAds(fetchedAds);
 
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching matches:", error.response?.data || error.message);
+        console.error("Error fetching data:", error.response?.data || error.message);
         toast({
           title: "Error",
           description: "No se pudieron cargar los datos. Inténtalo de nuevo.",
@@ -108,20 +106,6 @@ export default function DiscoverPage() {
     };
     fetchData();
   }, [navigate, toast, userId]);
-
-  // Filter ads based on current match interests
-  useEffect(() => {
-    if (currentMatch && ads.length > 0) {
-      const relevantAds = ads.filter((ad) =>
-        ad.relatedInterests.some(
-          (interest) => currentMatch.interests.includes(interest.toLowerCase()) || currentMatch.commonInterests.includes(interest.toLowerCase())
-        )
-      );
-      const shuffled = [...relevantAds].sort(() => 0.5 - Math.random());
-      setLeftAds(shuffled.slice(0, 2));
-      setRightAds(shuffled.slice(2, 4));
-    }
-  }, [currentMatch, ads]);
 
   const handleNextImage = () => {
     if (currentMatch?.images.length > 1) {
@@ -249,7 +233,7 @@ export default function DiscoverPage() {
   };
 
   const getInterestIcon = (interest) => {
-    const iconProps = { className: "h-4 w-4" }; // Explicit props to avoid stray attributes
+    const iconProps = { className: "h-4 w-4" };
     switch (interest.toLowerCase()) {
       case "viajes": return <Plane {...iconProps} />;
       case "música": return <Music {...iconProps} />;
@@ -284,28 +268,25 @@ export default function DiscoverPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="hidden lg:block lg:col-span-2">
-            <div className="space-y-4">
-              {leftAds.map((ad) => (
-                <div
-                  key={ad.id}
-                  className="cursor-pointer transition-transform duration-300 hover:scale-[1.03]"
-                  onClick={() => handleAdClick(ad)}
-                >
-                  <Card className="overflow-hidden border-gray-800 bg-gray-900/50 h-[300px]">
-                    <div className="relative h-full">
-                      <img src={ad.image || "/placeholder.svg"} alt={ad.title} className="h-full w-full object-cover" />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
-                        <p className="text-sm font-medium">{ad.title}</p>
-                        <div className="flex items-center mt-1 text-xs text-gray-300">
-                          <Info className="h-3 w-3 mr-1" />
-                          <span>Anuncio</span>
-                        </div>
+            {leftAd && (
+              <div
+                className="cursor-pointer transition-transform duration-300 hover:scale-[1.03]"
+                onClick={() => handleAdClick(leftAd)}
+              >
+                <Card className="overflow-hidden border-gray-800 bg-gray-900/50 h-[300px]">
+                  <div className="relative h-full">
+                    <img src={leftAd.image} alt={leftAd.title} className="h-full w-full object-cover" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
+                      <p className="text-sm font-medium">{leftAd.title}</p>
+                      <div className="flex items-center mt-1 text-xs text-gray-300">
+                        <Info className="h-3 w-3 mr-1" />
+                        <span>Anuncio</span>
                       </div>
                     </div>
-                  </Card>
-                </div>
-              ))}
-            </div>
+                  </div>
+                </Card>
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-8">
@@ -485,28 +466,25 @@ export default function DiscoverPage() {
           </div>
 
           <div className="hidden lg:block lg:col-span-2">
-            <div className="space-y-4">
-              {rightAds.map((ad) => (
-                <div
-                  key={ad.id}
-                  className="cursor-pointer transition-transform duration-300 hover:scale-[1.03]"
-                  onClick={() => handleAdClick(ad)}
-                >
-                  <Card className="overflow-hidden border-gray-800 bg-gray-900/50 h-[300px]">
-                    <div className="relative h-full">
-                      <img src={ad.image || "/placeholder.svg"} alt={ad.title} className="h-full w-full object-cover" />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
-                        <p className="text-sm font-medium">{ad.title}</p>
-                        <div className="flex items-center mt-1 text-xs text-gray-300">
-                          <Info className="h-3 w-3 mr-1" />
-                          <span>Anuncio</span>
-                        </div>
+            {rightAd && (
+              <div
+                className="cursor-pointer transition-transform duration-300 hover:scale-[1.03]"
+                onClick={() => handleAdClick(rightAd)}
+              >
+                <Card className="overflow-hidden border-gray-800 bg-gray-900/50 h-[300px]">
+                  <div className="relative h-full">
+                    <img src={rightAd.image} alt={rightAd.title} className="h-full w-full object-cover" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
+                      <p className="text-sm font-medium">{rightAd.title}</p>
+                      <div className="flex items-center mt-1 text-xs text-gray-300">
+                        <Info className="h-3 w-3 mr-1" />
+                        <span>Anuncio</span>
                       </div>
                     </div>
-                  </Card>
-                </div>
-              ))}
-            </div>
+                  </div>
+                </Card>
+              </div>
+            )}
           </div>
         </div>
       </div>
