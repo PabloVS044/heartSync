@@ -42,23 +42,27 @@ export default function MatchesPage() {
           params: { skip: 0, limit: 50 }
         })
 
-        const transformedMatches = response.data.map(match => ({
-          id: match.id,
-          name: match.name,
-          age: match.age,
-          location: match.country,
-          lastActive: match.lastActive ? `Hace ${Math.round((new Date() - new Date(match.lastActive)) / (1000 * 60 * 60))} horas` : "En línea",
-          image: match.photos?.[0] || "/placeholder.svg?height=100&width=100",
-          compatibility: Math.min(80 + (match.sharedInterests || 0) * 5, 95),
-          interests: match.interests || [],
-          commonInterests: match.interests || [],
-          commonAttributes: {
-            country: match.country,
-            activityLevel: match.interests?.includes("senderismo") || match.interests?.includes("natación") ? "Activo" : "Moderado"
-          },
-          lastMessage: null, // Placeholder; requires chat integration
-          matchType: match.matchType
-        }))
+        const transformedMatches = response.data
+          .filter(match => match.matchType === 'matched') // Only show mutual matches
+          .map(match => ({
+            id: match.id,
+            name: match.name,
+            age: match.age,
+            location: match.country,
+            lastActive: match.lastActive 
+              ? `Hace ${Math.round((new Date() - new Date(match.lastActive)) / (1000 * 60 * 60))} horas` 
+              : "En línea",
+            image: match.photos?.[0] || "/placeholder.svg?height=100&width=100",
+            compatibility: Math.min(80 + (match.sharedInterests || 0) * 5, 95),
+            interests: match.interests || [],
+            commonInterests: match.interests || [],
+            commonAttributes: {
+              country: match.country,
+              activityLevel: match.interests?.includes("senderismo") || match.interests?.includes("natación") ? "Activo" : "Moderado"
+            },
+            lastMessage: null, // Placeholder; requires chat integration
+            matchType: match.matchType
+          }))
 
         setMatches(transformedMatches)
         setIsLoading(false)
