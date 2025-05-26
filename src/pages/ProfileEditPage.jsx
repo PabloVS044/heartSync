@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useRef } from "react"
 import {
   User,
   Camera,
@@ -48,42 +47,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { motion } from "framer-motion"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toasts"
+import axios from "axios"
+import { jwtDecode } from "jwt-decode"
+import Navbar from "@/components/navbar"
 
-// Datos simulados del usuario - En producción vendrían de Neo4J
-const USER_DATA = {
-  id: "user123",
-  firstName: "María",
-  lastName: "García",
-  email: "maria.garcia@example.com",
-  phone: "+34 600 123 456",
-  age: 42,
-  gender: "female",
-  location: "Madrid, España",
-  bio: "Profesora de yoga y amante de los viajes. Me encanta la naturaleza, los animales y descubrir nuevas culturas. Busco a alguien con quien compartir nuevas experiencias y crear recuerdos inolvidables.",
-  occupation: "Profesora de yoga",
-  education: "Licenciada en Educación Física",
-  photos: [
-    "/placeholder.svg?height=400&width=300&text=Foto+Principal",
-    "/placeholder.svg?height=400&width=300&text=Foto+2",
-    "/placeholder.svg?height=400&width=300&text=Foto+3",
-  ],
-  interests: ["yoga", "viajes", "gastronomía", "cine", "senderismo", "lectura", "música"],
-  preferences: {
-    ageRange: [25, 40],
-    distance: 50,
-    lookingFor: "relationship",
-    showMe: "men",
-  },
-  privacy: {
-    showOnlineStatus: true,
-    showLastActive: true,
-    showDistance: true,
-    profileVisibility: "public",
-  },
-}
-
-// Lista de intereses disponibles con sus iconos
 const AVAILABLE_INTERESTS = [
   { id: "viajes", name: "Viajes", icon: <Plane className="h-4 w-4" /> },
   { id: "música", name: "Música", icon: <Music className="h-4 w-4" /> },
@@ -100,18 +68,82 @@ const AVAILABLE_INTERESTS = [
 ]
 
 export default function ProfileEditPage() {
-  const router = useRouter()
   const { toast } = useToast()
   const fileInputRef = useRef(null)
 
-  const [userData, setUserData] = useState(USER_DATA)
+  const [userData, setUserData] = useState(null)
   const [activeTab, setActiveTab] = useState("personal")
   const [isEditing, setIsEditing] = useState(false)
-  const [editedData, setEditedData] = useState(USER_DATA)
+  const [editedData, setEditedData] = useState(null)
   const [interestDialogOpen, setInterestDialogOpen] = useState(false)
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("authToken")
+        if (!token) {
+          throw new Error("No authentication token found")
+        }
+        const decoded = jwtDecode(token)
+        const userId = decoded.userId
+
+        const response = await axios.get(`http://localhost:3000/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const fetchedUser = {
+          id: response.data.id,
+          firstName: response.data.name || "",
+          lastName: response.data.surname || "",
+          email: response.data.email || "",
+          phone: response.data.phone || "",
+          age: response.data.age || "",
+          gender: response.data.gender || "",
+          location: response.data.country || "",
+          bio: response.data.bio || "",
+          occupation: response.data.occupation || "",
+          education: response.data.education || "",
+          photos: response.data.photos?.length ? response.data.photos : ["/placeholder.svg"],
+          interests: response.data.interests || [],
+          preferences: {
+            ageRange: [
+              response.data.minAgePreference || 18,
+              response.data.maxAgePreference || 70,
+            ],
+            distance: response.data.distance || 50,
+            lookingFor: response.data.lookingFor || "relationship",
+            showMe: response.data.showMe || "local",
+          },
+          privacy: {
+            showOnlineStatus: response.data.showOnlineStatus ?? true,
+            showLastActive: response.data.showLastActive ?? true,
+            showDistance: response.data.showDistance ?? true,
+            profileVisibility: response.data.profileVisibility || "public",
+          },
+        }
+
+        setUserData(fetchedUser)
+        setEditedData(fetchedUser)
+        if (!fetchedUser.age || !fetchedUser.location || !fetchedUser.gender) {
+          setIsEditing(true)
+        }
+        setIsLoading(false)
+      } catch (error) {
+        setIsLoading(false)
+        toast({
+          title: "Error",
+          description: error.message || "Failed to fetch user data",
+          variant: "destructive",
+        })
+      }
+    }
+
+    fetchUserData()
+  }, [toast])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -131,16 +163,52 @@ export default function ProfileEditPage() {
     }))
   }
 
-  const handleSaveChanges = () => {
-    // Aquí se enviarían los datos al backend (Neo4J)
-    setUserData(editedData)
-    setIsEditing(false)
+  const handleSaveChanges = async () => {
+    try {
+      const token = localStorage.getItem("authToken")
+      if (!token) {
+        throw new Error("No authentication token found")
+      }
+      const decoded = jwtDecode(token)
+      const userId = decoded.userId
 
-    toast({
-      title: "Cambios guardados",
-      description: "Tu perfil ha sido actualizado correctamente.",
-      variant: "success",
-    })
+      const updateData = {
+        age: editedData.age || null,
+        country: editedData.location || null,
+        gender: editedData.gender || null,
+        interests: editedData.interests || [],
+        photos: editedData.photos || [],
+        bio: editedData.bio || "",
+        minAgePreference: editedData.preferences.ageRange[0] || 18,
+        maxAgePreference: editedData.preferences.ageRange[1] || 70,
+        internationalMode: editedData.privacy.profileVisibility === "public",
+      }
+
+      const response = await axios.put(`http://localhost:3000/users/${userId}/profile`, updateData, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      setUserData({
+        ...editedData,
+        id: response.data.id,
+        firstName: response.data.name || "",
+        lastName: response.data.surname || "",
+        email: response.data.email || "",
+      })
+      setIsEditing(false)
+
+      toast({
+        title: "Cambios guardados",
+        description: "Tu perfil ha sido actualizado correctamente.",
+        variant: "success",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || "Failed to update profile",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleAddInterest = (interestId) => {
@@ -162,8 +230,6 @@ export default function ProfileEditPage() {
   const handlePhotoUpload = (e) => {
     const files = e.target.files
     if (files && files.length > 0) {
-      // Simulación de carga de imagen
-      // En producción, aquí se subiría la imagen a un servicio de almacenamiento
       const newPhotoUrl = URL.createObjectURL(files[0])
 
       setEditedData((prev) => ({
@@ -213,7 +279,6 @@ export default function ProfileEditPage() {
 
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
-      // Simulación de carga de imagen
       const newPhotoUrl = URL.createObjectURL(files[0])
 
       setEditedData((prev) => ({
@@ -234,8 +299,17 @@ export default function ProfileEditPage() {
     setPhotoPreviewOpen(true)
   }
 
+  if (isLoading) {
+    return <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">Cargando...</div>
+  }
+
+  if (!userData || !editedData) {
+    return <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">Error al cargar los datos del usuario</div>
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
+      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Editar Perfil</h1>
@@ -266,7 +340,6 @@ export default function ProfileEditPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Columna izquierda - Fotos */}
           <div className="lg:col-span-1">
             <Card className="border-gray-800 bg-gray-900/50 shadow-xl">
               <CardHeader>
@@ -279,14 +352,13 @@ export default function ProfileEditPage() {
 
               <CardContent>
                 <div className="space-y-4">
-                  {/* Foto principal */}
                   <div className="relative">
                     <Avatar
                       className="w-32 h-32 mx-auto border-4 border-rose-600 cursor-pointer"
                       onClick={() => openPhotoPreview(0)}
                     >
                       <AvatarImage src={editedData.photos[0] || "/placeholder.svg"} alt="Foto de perfil" />
-                      <AvatarFallback>{editedData.firstName.charAt(0)}</AvatarFallback>
+                      <AvatarFallback>{editedData.firstName ? editedData.firstName.charAt(0) : "U"}</AvatarFallback>
                     </Avatar>
 
                     {isEditing && (
@@ -309,7 +381,6 @@ export default function ProfileEditPage() {
                     )}
                   </div>
 
-                  {/* Galería de fotos */}
                   <div className="grid grid-cols-3 gap-2">
                     {editedData.photos.map((photo, index) => (
                       <div key={index} className="relative group">
@@ -335,7 +406,6 @@ export default function ProfileEditPage() {
                       </div>
                     ))}
 
-                    {/* Añadir foto */}
                     {isEditing && editedData.photos.length < 6 && (
                       <div
                         className={`aspect-square rounded-md border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors ${
@@ -362,7 +432,6 @@ export default function ProfileEditPage() {
               </CardContent>
             </Card>
 
-            {/* Intereses */}
             <Card className="border-gray-800 bg-gray-900/50 shadow-xl mt-6">
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -382,7 +451,7 @@ export default function ProfileEditPage() {
                         className="bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 flex items-center gap-1 pl-2 pr-1 py-1"
                       >
                         {interest?.icon}
-                        {interest?.name}
+                        {interest?.name || interestId}
                         {isEditing && (
                           <button
                             className="ml-1 hover:bg-rose-500/20 rounded-full p-0.5"
@@ -413,7 +482,6 @@ export default function ProfileEditPage() {
             </Card>
           </div>
 
-          {/* Columna derecha - Información del perfil */}
           <div className="lg:col-span-2">
             <Card className="border-gray-800 bg-gray-900/50 shadow-xl">
               <CardHeader>
@@ -425,355 +493,189 @@ export default function ProfileEditPage() {
                     <TabsTrigger value="preferences" className="data-[state=active]:bg-rose-600">
                       Preferencias
                     </TabsTrigger>
-                    <TabsTrigger value="privacy" className="data-[state=active]:bg-rose-600">
-                      Privacidad
-                    </TabsTrigger>
                   </TabsList>
+
+                  <CardContent>
+                    <TabsContent value="personal" className="mt-6">
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="firstName">Nombre</Label>
+                            <div className="relative">
+                              <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                              <Input
+                                id="firstName"
+                                name="firstName"
+                                value={editedData.firstName}
+                                onChange={handleInputChange}
+                                disabled={!isEditing}
+                                className="pl-10 bg-gray-800/50 border-gray-700 text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="lastName">Apellido</Label>
+                            <div className="relative">
+                              <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                              <Input
+                                id="lastName"
+                                name="lastName"
+                                value={editedData.lastName}
+                                onChange={handleInputChange}
+                                disabled={!isEditing}
+                                className="pl-10 bg-gray-800/50 border-gray-700 text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                              <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={editedData.email}
+                                onChange={handleInputChange}
+                                disabled
+                                className="pl-10 bg-gray-800/50 border-gray-700 text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="age">Edad</Label>
+                            <div className="relative">
+                              <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                              <Input
+                                id="age"
+                                name="age"
+                                type="number"
+                                value={editedData.age}
+                                onChange={handleInputChange}
+                                disabled={!isEditing}
+                                className="pl-10 bg-gray-800/50 border-gray-700 text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                          <div className="space-y-2">
+                            <Label htmlFor="location">Ubicación</Label>
+                            <div className="relative">
+                              <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                              <Input
+                                id="location"
+                                name="location"
+                                value={editedData.location}
+                                onChange={handleInputChange}
+                                disabled={!isEditing}
+                                className="pl-10 bg-gray-800/50 border-gray-700 text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="bio">Biografía</Label>
+                          <Textarea
+                            id="bio"
+                            name="bio"
+                            value={editedData.bio}
+                            onChange={handleInputChange}
+                            disabled={!isEditing}
+                            className="bg-gray-800/50 border-gray-700 text-white min-h-[120px]"
+                          />
+                          {isEditing && (
+                            <p className="text-xs text-gray-400">
+                              Describe quién eres, qué te gusta y qué buscas. Máximo 500 caracteres.
+                            </p>
+                          )}
+                        </div>
+
+                        {isEditing && (
+                          <div className="space-y-2">
+                            <Label htmlFor="gender">Género</Label>
+                            <RadioGroup
+                              id="gender"
+                              name="gender"
+                              value={editedData.gender}
+                              onValueChange={(value) => handleInputChange({ target: { name: "gender", value } })}
+                              className="flex flex-col space-y-2"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="male" id="male" />
+                                <Label htmlFor="male">Hombre</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="female" id="female" />
+                                <Label htmlFor="female">Mujer</Label>
+                              </div>
+                            </RadioGroup>
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="preferences" className="mt-6">
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-medium">Preferencias de búsqueda</h3>
+
+                          <div className="space-y-2">
+                            <Label>Rango de edad</Label>
+                            <div className="pt-6 px-2">
+                              <Slider
+                                value={editedData.preferences.ageRange}
+                                min={18}
+                                max={70}
+                                step={1}
+                                onValueChange={(value) => handleNestedInputChange("preferences", "ageRange", value)}
+                                disabled={!isEditing}
+                                className="mb-6"
+                              />
+                              <div className="flex justify-between text-sm text-gray-400">
+                                <span>{editedData.preferences.ageRange[0]} años</span>
+                                <span>{editedData.preferences.ageRange[1]} años</span>
+                              </div>
+                            </div>
+                          </div>
+
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            
+
+                            <div className="space-y-2">
+                              <Label htmlFor="showMe">Modo de búsqueda</Label>
+                              <Select
+                                value={editedData.preferences.showMe}
+                                onValueChange={(value) => handleNestedInputChange("preferences", "showMe", value)}
+                                disabled={!isEditing}
+                              >
+                                <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white">
+                                  <SelectValue placeholder="Selecciona una opción" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-gray-900 text-white border-gray-700">
+                                  <SelectItem value="internacional">Modo Internacional</SelectItem>
+                                  <SelectItem value="local">Modo Local</SelectItem>
+
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                  </CardContent>
                 </Tabs>
               </CardHeader>
-
-              <CardContent>
-                <TabsContent value="personal" className="mt-0">
-                  <div className="space-y-6">
-                    {/* Información básica */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">Nombre</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="firstName"
-                            name="firstName"
-                            value={editedData.firstName}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
-                            className="pl-10 bg-gray-800/50 border-gray-700 text-white"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Apellido</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="lastName"
-                            name="lastName"
-                            value={editedData.lastName}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
-                            className="pl-10 bg-gray-800/50 border-gray-700 text-white"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={editedData.email}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
-                            className="pl-10 bg-gray-800/50 border-gray-700 text-white"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Teléfono</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input id="phone" name="phone" />
-                          <Input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            value={editedData.phone}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
-                            className="pl-10 bg-gray-800/50 border-gray-700 text-white"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="age">Edad</Label>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="age"
-                            name="age"
-                            type="number"
-                            value={editedData.age}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
-                            className="pl-10 bg-gray-800/50 border-gray-700 text-white"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="location">Ubicación</Label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="location"
-                            name="location"
-                            value={editedData.location}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
-                            className="pl-10 bg-gray-800/50 border-gray-700 text-white"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="occupation">Ocupación</Label>
-                        <Input
-                          id="occupation"
-                          name="occupation"
-                          value={editedData.occupation}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          className="bg-gray-800/50 border-gray-700 text-white"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="education">Educación</Label>
-                        <Input
-                          id="education"
-                          name="education"
-                          value={editedData.education}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          className="bg-gray-800/50 border-gray-700 text-white"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="bio">Biografía</Label>
-                      <Textarea
-                        id="bio"
-                        name="bio"
-                        value={editedData.bio}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="bg-gray-800/50 border-gray-700 text-white min-h-[120px]"
-                      />
-                      {isEditing && (
-                        <p className="text-xs text-gray-400">
-                          Describe quién eres, qué te gusta y qué buscas. Máximo 500 caracteres.
-                        </p>
-                      )}
-                    </div>
-
-                    {isEditing && (
-                      <div className="space-y-2">
-                        <Label htmlFor="gender">Género</Label>
-                        <RadioGroup
-                          id="gender"
-                          name="gender"
-                          value={editedData.gender}
-                          onValueChange={(value) => handleInputChange({ target: { name: "gender", value } })}
-                          className="flex flex-col space-y-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="male" id="male" />
-                            <Label htmlFor="male">Hombre</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="female" id="female" />
-                            <Label htmlFor="female">Mujer</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="non-binary" id="non-binary" />
-                            <Label htmlFor="non-binary">No binario</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="other" id="other" />
-                            <Label htmlFor="other">Otro</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="preferences" className="mt-0">
-                  <div className="space-y-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Preferencias de búsqueda</h3>
-
-                      <div className="space-y-2">
-                        <Label>Rango de edad</Label>
-                        <div className="pt-6 px-2">
-                          <Slider
-                            defaultValue={editedData.preferences.ageRange}
-                            min={18}
-                            max={70}
-                            step={1}
-                            value={editedData.preferences.ageRange}
-                            onValueChange={(value) => handleNestedInputChange("preferences", "ageRange", value)}
-                            disabled={!isEditing}
-                            className="mb-6"
-                          />
-                          <div className="flex justify-between text-sm text-gray-400">
-                            <span>{editedData.preferences.ageRange[0]} años</span>
-                            <span>{editedData.preferences.ageRange[1]} años</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Distancia máxima</Label>
-                        <div className="pt-6 px-2">
-                          <Slider
-                            defaultValue={[editedData.preferences.distance]}
-                            min={5}
-                            max={150}
-                            step={5}
-                            value={[editedData.preferences.distance]}
-                            onValueChange={(value) => handleNestedInputChange("preferences", "distance", value[0])}
-                            disabled={!isEditing}
-                            className="mb-6"
-                          />
-                          <div className="flex justify-between text-sm text-gray-400">
-                            <span>5 km</span>
-                            <span>{editedData.preferences.distance} km</span>
-                            <span>150 km</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="lookingFor">Buscando</Label>
-                          <Select
-                            value={editedData.preferences.lookingFor}
-                            onValueChange={(value) => handleNestedInputChange("preferences", "lookingFor", value)}
-                            disabled={!isEditing}
-                          >
-                            <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white">
-                              <SelectValue placeholder="Selecciona una opción" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white text-gray-900">
-                              <SelectItem value="relationship">Relación seria</SelectItem>
-                              <SelectItem value="casual">Algo casual</SelectItem>
-                              <SelectItem value="friendship">Amistad</SelectItem>
-                              <SelectItem value="undecided">No estoy seguro/a</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="showMe">Mostrarme</Label>
-                          <Select
-                            value={editedData.preferences.showMe}
-                            onValueChange={(value) => handleNestedInputChange("preferences", "showMe", value)}
-                            disabled={!isEditing}
-                          >
-                            <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white">
-                              <SelectValue placeholder="Selecciona una opción" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white text-gray-900">
-                              <SelectItem value="men">Hombres</SelectItem>
-                              <SelectItem value="women">Mujeres</SelectItem>
-                              <SelectItem value="everyone">Todos</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="privacy" className="mt-0">
-                  <div className="space-y-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Configuración de privacidad</h3>
-
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="showOnlineStatus" className="text-base">
-                              Mostrar estado en línea
-                            </Label>
-                            <p className="text-sm text-gray-400">Otros usuarios podrán ver cuando estás activo/a</p>
-                          </div>
-                          <Switch
-                            id="showOnlineStatus"
-                            checked={editedData.privacy.showOnlineStatus}
-                            onCheckedChange={(checked) =>
-                              handleNestedInputChange("privacy", "showOnlineStatus", checked)
-                            }
-                            disabled={!isEditing}
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="showLastActive" className="text-base">
-                              Mostrar última conexión
-                            </Label>
-                            <p className="text-sm text-gray-400">Otros usuarios verán cuándo fue tu última actividad</p>
-                          </div>
-                          <Switch
-                            id="showLastActive"
-                            checked={editedData.privacy.showLastActive}
-                            onCheckedChange={(checked) => handleNestedInputChange("privacy", "showLastActive", checked)}
-                            disabled={!isEditing}
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label htmlFor="showDistance" className="text-base">
-                              Mostrar distancia
-                            </Label>
-                            <p className="text-sm text-gray-400">Otros usuarios verán a qué distancia te encuentras</p>
-                          </div>
-                          <Switch
-                            id="showDistance"
-                            checked={editedData.privacy.showDistance}
-                            onCheckedChange={(checked) => handleNestedInputChange("privacy", "showDistance", checked)}
-                            disabled={!isEditing}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 pt-4">
-                        <Label htmlFor="profileVisibility">Visibilidad del perfil</Label>
-                        <Select
-                          value={editedData.privacy.profileVisibility}
-                          onValueChange={(value) => handleNestedInputChange("privacy", "profileVisibility", value)}
-                          disabled={!isEditing}
-                        >
-                          <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white">
-                            <SelectValue placeholder="Selecciona una opción" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white text-gray-900">
-                            <SelectItem value="public">Público (todos pueden ver tu perfil)</SelectItem>
-                            <SelectItem value="matches">Solo matches (solo quienes hagan match contigo)</SelectItem>
-                            <SelectItem value="hidden">Oculto (modo incógnito)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-              </CardContent>
 
               {isEditing && (
                 <CardFooter className="border-t border-gray-800 bg-gray-900/30 p-6">
@@ -788,7 +690,6 @@ export default function ProfileEditPage() {
         </div>
       </div>
 
-      {/* Modal de selección de intereses */}
       <Dialog open={interestDialogOpen} onOpenChange={setInterestDialogOpen}>
         <DialogContent className="bg-gray-900 border-gray-800 text-white">
           <DialogHeader>
@@ -830,7 +731,6 @@ export default function ProfileEditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de vista previa de foto */}
       <Dialog open={photoPreviewOpen} onOpenChange={setPhotoPreviewOpen}>
         <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-3xl">
           <DialogHeader>

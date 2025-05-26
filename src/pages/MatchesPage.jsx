@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Heart, MessageSquare, MapPin, Sparkles, Search, Filter, User, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -8,119 +8,83 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toasts"
 import Navbar from "@/components/navbar"
-
-// Datos simulados - En producción vendrían de Neo4J
-const MATCHES = [
-  {
-    id: 1,
-    name: "Elena",
-    age: 42,
-    location: "Madrid, España",
-    lastActive: "Hace 2 horas",
-    image: "/placeholder.svg?height=100&width=100&text=Elena",
-    compatibility: 92,
-    interests: ["yoga", "viajes", "gastronomía", "cine", "senderismo"],
-    commonInterests: ["viajes", "cine"],
-    commonAttributes: {
-      country: "España",
-      musicTaste: "Jazz, Clásica",
-      activityLevel: "Activo",
-    },
-    lastMessage: {
-      text: "¿Te gustaría ir al cine este fin de semana?",
-      timestamp: "12:45",
-      unread: true,
-    },
-  },
-  {
-    id: 2,
-    name: "Sofía",
-    age: 45,
-    location: "Barcelona, España",
-    lastActive: "En línea",
-    image: "/placeholder.svg?height=100&width=100&text=Sofia",
-    compatibility: 88,
-    interests: ["arte", "música", "cocina", "vino", "teatro"],
-    commonInterests: ["música", "cocina"],
-    commonAttributes: {
-      country: "España",
-      musicTaste: "Jazz, Rock",
-      foodPreference: "Mediterránea",
-    },
-    lastMessage: {
-      text: "Me encantó nuestra conversación de ayer.",
-      timestamp: "Ayer",
-      unread: false,
-    },
-  },
-  {
-    id: 3,
-    name: "Carmen",
-    age: 39,
-    location: "Valencia, España",
-    lastActive: "Hace 5 minutos",
-    image: "/placeholder.svg?height=100&width=100&text=Carmen",
-    compatibility: 95,
-    interests: ["arquitectura", "viajes", "fotografía", "lectura", "natación"],
-    commonInterests: ["viajes", "fotografía", "lectura"],
-    commonAttributes: {
-      country: "España",
-      bookGenre: "Novela histórica",
-      activityLevel: "Activo",
-    },
-    lastMessage: null,
-  },
-  {
-    id: 4,
-    name: "Laura",
-    age: 41,
-    location: "Sevilla, España",
-    lastActive: "Hace 1 día",
-    image: "/placeholder.svg?height=100&width=100&text=Laura",
-    compatibility: 85,
-    interests: ["baile", "cocina", "jardinería", "cine", "yoga"],
-    commonInterests: ["cocina", "cine"],
-    commonAttributes: {
-      country: "España",
-      movieGenre: "Comedia romántica",
-      foodPreference: "Vegetariana",
-    },
-    lastMessage: {
-      text: "¿Has probado el nuevo restaurante vegetariano?",
-      timestamp: "Lun",
-      unread: false,
-    },
-  },
-  {
-    id: 5,
-    name: "Isabel",
-    age: 47,
-    location: "Málaga, España",
-    lastActive: "Hace 3 horas",
-    image: "/placeholder.svg?height=100&width=100&text=Isabel",
-    compatibility: 90,
-    interests: ["playa", "vino", "historia", "música", "meditación"],
-    commonInterests: ["música", "historia"],
-    commonAttributes: {
-      country: "España",
-      musicTaste: "Rock clásico",
-      activityLevel: "Relajado",
-    },
-    lastMessage: {
-      text: "¿Conoces algún buen concierto para este mes?",
-      timestamp: "Dom",
-      unread: true,
-    },
-  },
-]
+import axios from "axios"
+import { useNavigate } from "react-router-dom"
 
 export default function MatchesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("all")
+  const [matches, setMatches] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
+  const navigate = useNavigate()
+  const userId = localStorage.getItem("userId")
+
+  // Fetch matches on component mount
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const token = localStorage.getItem("authToken")
+        if (!token || !userId) {
+          toast({
+            title: "Sesión expirada",
+            description: "Por favor, inicia sesión nuevamente.",
+            variant: "destructive"
+          })
+          navigate("/login")
+          return
+        }
+
+        const response = await axios.get(`http://localhost:3000/users/${userId}/matches`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { skip: 0, limit: 50 }
+        })
+
+        const transformedMatches = response.data
+          .filter(match => match.matchType === 'matched') // Only show mutual matches
+          .map(match => ({
+            id: match.id,
+            name: match.name,
+            age: match.age,
+            location: match.country,
+            lastActive: match.lastActive 
+              ? `Hace ${Math.round((new Date() - new Date(match.lastActive)) / (1000 * 60 * 60))} horas` 
+              : "En línea",
+            image: match.photos?.[0] || "/placeholder.svg?height=100&width=100",
+            compatibility: Math.min(80 + (match.sharedInterests || 0) * 5, 95),
+            interests: match.interests || [],
+            commonInterests: match.interests || [],
+            commonAttributes: {
+              country: match.country,
+              activityLevel: match.interests?.includes("senderismo") || match.interests?.includes("natación") ? "Activo" : "Moderado"
+            },
+            lastMessage: null, // Placeholder; requires chat integration
+            matchType: match.matchType
+          }))
+
+        setMatches(transformedMatches)
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Error fetching matches:", error.response?.data || error.message)
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los matches. Inténtalo de nuevo.",
+          variant: "destructive"
+        })
+        setIsLoading(false)
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          navigate("/login")
+        }
+      }
+    }
+
+    fetchMatches()
+  }, [navigate, toast, userId])
 
   // Filtrar matches según la pestaña activa y el término de búsqueda
-  const filteredMatches = MATCHES.filter((match) => {
+  const filteredMatches = matches.filter((match) => {
     const matchesSearch =
       match.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       match.location.toLowerCase().includes(searchTerm.toLowerCase())
@@ -133,13 +97,19 @@ export default function MatchesPage() {
   })
 
   const handleViewProfile = (matchId) => {
-    // Navegación simple sin useRouter
-    window.location.href = `/profile/${matchId}`
+    navigate(`/profile/${matchId}`)
   }
 
   const handleStartChat = (matchId) => {
-    // Navegación simple sin useRouter
-    window.location.href = `/messages/${matchId}`
+    navigate(`/messages/${matchId}`)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
+        <p>Cargando matches...</p>
+      </div>
+    )
   }
 
   return (
@@ -311,7 +281,7 @@ export default function MatchesPage() {
                   ? "No hay matches que coincidan con tu búsqueda."
                   : "Sigue explorando para encontrar nuevos matches."}
               </p>
-              <Button className="bg-rose-600 hover:bg-rose-700" onClick={() => (window.location.href = "/discover")}>
+              <Button className="bg-rose-600 hover:bg-rose-700" onClick={() => navigate("/discover")}>
                 Descubrir personas
               </Button>
             </div>
