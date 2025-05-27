@@ -571,18 +571,17 @@ export default function LandingPage() {
         </section>
 
         {/* Preguntas frecuentes */}
-        <section id="preguntas" className="py-20 bg-gray-50">
+        <section id="preguntas" className="py-20 bg-gray-800">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <Badge className="mb-4 bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors">
+              <Badge className="mb-4 bg-rose-900 text-rose-300 hover:bg-rose-800 transition-colors">
                 Preguntas frecuentes
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-100">
                 Resolvemos tus dudas
               </h2>
-              <p className="text-lg text-gray-600">
-                Encuentra respuestas a las preguntas más comunes sobre
-                HeartSync.
+              <p className="text-lg text-gray-400">
+                Encuentra respuestas a las preguntas más comunes sobre HeartSync.
               </p>
             </div>
 
@@ -610,8 +609,7 @@ export default function LandingPage() {
                       "Sí, ofrecemos una versión gratuita que te permite crear un perfil, explorar y conectar con otros usuarios. Para funciones premium como filtros avanzados, mensajes ilimitados y ver quién te ha dado like, ofrecemos suscripciones mensuales a precios accesibles.",
                   },
                   {
-                    question:
-                      "¿Cómo se diferencia HeartSync de otras apps de citas?",
+                    question: "¿Cómo se diferencia HeartSync de otras apps de citas?",
                     answer:
                       "HeartSync es la única plataforma diseñada específicamente para conectar mujeres mayores con hombres más jóvenes. Nuestro enfoque está en crear conexiones significativas basadas en la compatibilidad real, no solo en la apariencia física.",
                   },
@@ -619,14 +617,12 @@ export default function LandingPage() {
                   <AccordionItem
                     key={index}
                     value={`item-${index}`}
-                    className="bg-white rounded-lg shadow-md"
+                    className="bg-gray-800 rounded-lg shadow-md"
                   >
-                    <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                      <span className="text-left font-medium">
-                        {faq.question}
-                      </span>
+                    <AccordionTrigger className="px-6 py-4 hover:no-underline text-gray-100">
+                      <span className="text-left font-medium">{faq.question}</span>
                     </AccordionTrigger>
-                    <AccordionContent className="px-6 pb-4 pt-2 text-gray-600">
+                    <AccordionContent className="px-6 pb-4 pt-2 text-gray-400">
                       {faq.answer}
                     </AccordionContent>
                   </AccordionItem>
@@ -637,25 +633,24 @@ export default function LandingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-20 bg-gradient-to-br from-rose-500 to-rose-600 text-white">
+        <section className="py-20 bg-gradient-to-br from-rose-600 to-rose-800 text-white">
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-100">
                 Comienza tu historia hoy
               </h2>
-              <p className="text-xl mb-8 opacity-90">
-                Únete a miles de personas que ya han encontrado conexiones
-                significativas en HeartSync.
+              <p className="text-xl mb-8 opacity-90 text-gray-200">
+                Únete a miles de personas que ya han encontrado conexiones significativas en HeartSync.
               </p>
               <Button
                 size="lg"
-                className="bg-white text-rose-600 hover:bg-gray-100 rounded-full shadow-lg group"
+                className="bg-gray-800 text-rose-400 hover:bg-gray-700 rounded-full shadow-lg group"
                 onClick={handleRegister}
               >
                 Crear cuenta gratis
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
-              <p className="mt-4 text-sm opacity-80">
+              <p className="mt-4 text-sm opacity-80 text-gray-300">
                 No se requiere tarjeta de crédito. Cancela cuando quieras.
               </p>
             </div>
@@ -663,7 +658,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="bg-gray-900 text-white pt-16 pb-8">
+      <footer className="bg-gray-950 text-gray-100 pt-16 pb-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div>
@@ -671,48 +666,43 @@ export default function LandingPage() {
                 <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-rose-700 rounded-md flex items-center justify-center">
                   <Heart className="h-5 w-5 text-white" fill="white" />
                 </div>
-                <span className="font-bold text-xl">HeartSync</span>
+                <span className="font-bold text-xl text-gray-100">HeartSync</span>
               </a>
               <p className="text-gray-400 mb-6">
-                Conectando corazones, creando historias significativas entre
-                generaciones.
+                Conectando corazones, creando historias significativas entre generaciones.
               </p>
               <div className="flex space-x-4">
-                {["twitter", "facebook", "instagram", "linkedin"].map(
-                  (social) => (
-                    <a
-                      key={social}
-                      href={`#${social}`}
-                      className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors"
-                    >
-                      <span className="sr-only">{social}</span>
-                      {/* Aquí irían los iconos de redes sociales */}
-                    </a>
-                  )
-                )}
+                {["twitter", "facebook", "instagram", "linkedin"].map((social) => (
+                  <a
+                    key={social}
+                    href={`#${social}`}
+                    className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors"
+                  >
+                    <span className="sr-only">{social}</span>
+                    {/* Aquí irían los iconos de redes sociales */}
+                  </a>
+                ))}
               </div>
             </div>
 
             <div>
-              <h4 className="font-semibold text-lg mb-4">Compañía</h4>
+              <h4 className="font-semibold text-lg mb-4 text-gray-100">Compañía</h4>
               <ul className="space-y-3">
-                {["Sobre Nosotros", "Equipo", "Carreras", "Blog", "Prensa"].map(
-                  (item) => (
-                    <li key={item}>
-                      <a
-                        href="#"
-                        className="text-gray-400 hover:text-white transition-colors"
-                      >
-                        {item}
-                      </a>
-                    </li>
-                  )
-                )}
+                {["Sobre Nosotros", "Equipo", "Carreras", "Blog", "Prensa"].map((item) => (
+                  <li key={item}>
+                    <a
+                      href="#"
+                      className="text-gray-400 hover:text-rose-400 transition-colors"
+                    >
+                      {item}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold text-lg mb-4">Legal</h4>
+              <h4 className="font-semibold text-lg mb-4 text-gray-100">Legal</h4>
               <ul className="space-y-3">
                 {[
                   "Términos de Servicio",
@@ -724,7 +714,7 @@ export default function LandingPage() {
                   <li key={item}>
                     <a
                       href="#"
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="text-gray-400 hover:text-rose-400 transition-colors"
                     >
                       {item}
                     </a>
@@ -734,7 +724,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-semibold text-lg mb-4">Soporte</h4>
+              <h4 className="font-semibold text-lg mb-4 text-gray-100">Soporte</h4>
               <ul className="space-y-3">
                 {[
                   "Centro de Ayuda",
@@ -746,7 +736,7 @@ export default function LandingPage() {
                   <li key={item}>
                     <a
                       href="#"
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="text-gray-400 hover:text-rose-400 transition-colors"
                     >
                       {item}
                     </a>
@@ -757,10 +747,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
-            <p>
-              © {new Date().getFullYear()} HeartSync. Todos los derechos
-              reservados.
-            </p>
+            <p>© {new Date().getFullYear()} HeartSync. Todos los derechos reservados.</p>
             <p className="mt-2">Hecho con ❤️ para conexiones auténticas</p>
           </div>
         </div>
