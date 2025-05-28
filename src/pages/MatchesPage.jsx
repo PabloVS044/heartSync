@@ -1,293 +1,239 @@
-"use client"
+// MatchesPage.jsx
+"use client";
 
-import { useState, useEffect } from "react"
-import { Heart, MessageSquare, MapPin, Sparkles, Search, Filter, User, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/hooks/use-toasts"
-import Navbar from "@/components/navbar"
-import axios from "axios"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import {
+  Heart,
+  MapPin,
+  Calendar,
+  X,
+  ImageIcon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Loader } from "@/components/loader";
+import Swal from "sweetalert2";
+
+// Lista de intereses para mostrar nombres en lugar de IDs
+const AVAILABLE_INTERESTS = [
+  { id: "arte", name: "Arte" },
+  { id: "música", name: "Música" },
+  { id: "cine", name: "Cine" },
+  { id: "lectura", name: "Lectura" },
+  { id: "gastronomía", name: "Gastronomía" },
+  { id: "yoga", name: "Yoga" },
+  { id: "senderismo", name: "Senderismo" },
+  { id: "viajar", name: "Viajar" },
+  { id: "fotografía", name: "Fotografía" },
+  { id: "baile", name: "Baile" },
+  { id: "teatro", name: "Teatro" },
+  { id: "deportes", name: "Deportes" },
+];
 
 export default function MatchesPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [activeTab, setActiveTab] = useState("all")
-  const [matches, setMatches] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
-  const navigate = useNavigate()
-  const userId = localStorage.getItem("userId")
+  const navigate = useNavigate();
+  const [matches, setMatches] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [skip, setSkip] = useState(0);
+  const [limit] = useState(10);
 
-  // Fetch matches on component mount
   useEffect(() => {
     const fetchMatches = async () => {
+      setIsLoading(true);
       try {
-        const token = localStorage.getItem("authToken")
-        if (!token || !userId) {
-          toast({
-            title: "Sesión expirada",
-            description: "Por favor, inicia sesión nuevamente.",
-            variant: "destructive"
-          })
-          navigate("/login")
-          return
+        const token = localStorage.getItem("authToken");
+        const userId = localStorage.getItem("userId");
+        if (!userId || !token) {
+          throw new Error("Usuario no autenticado");
         }
 
         const response = await axios.get(`http://localhost:3000/users/${userId}/matches`, {
+          params: { skip, limit },
           headers: { Authorization: `Bearer ${token}` },
-          params: { skip: 0, limit: 50 }
-        })
+        });
 
-        const transformedMatches = response.data
-          .filter(match => match.matchType === 'matched') // Only show mutual matches
-          .map(match => ({
-            id: match.id,
-            name: match.name,
-            age: match.age,
-            location: match.country,
-            lastActive: match.lastActive 
-              ? `Hace ${Math.round((new Date() - new Date(match.lastActive)) / (1000 * 60 * 60))} horas` 
-              : "En línea",
-            image: match.photos?.[0] || "/placeholder.svg?height=100&width=100",
-            compatibility: Math.min(80 + (match.sharedInterests || 0) * 5, 95),
-            interests: match.interests || [],
-            commonInterests: match.interests || [],
-            commonAttributes: {
-              country: match.country,
-              activityLevel: match.interests?.includes("senderismo") || match.interests?.includes("natación") ? "Activo" : "Moderado"
-            },
-            lastMessage: null, // Placeholder; requires chat integration
-            matchType: match.matchType
-          }))
-
-        setMatches(transformedMatches)
-        setIsLoading(false)
+        setMatches(response.data);
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching matches:", error.response?.data || error.message)
-        toast({
+        setError(error.response?.data?.error || "Error al cargar los matches");
+        setIsLoading(false);
+        await Swal.fire({
           title: "Error",
-          description: "No se pudieron cargar los matches. Inténtalo de nuevo.",
-          variant: "destructive"
-        })
-        setIsLoading(false)
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          navigate("/login")
-        }
+          text: error.response?.data?.error || "Error al cargar los matches",
+          icon: "error",
+          confirmButtonColor: "#f43f5e",
+          background: "#1f2937",
+          color: "#ffffff",
+        });
       }
-    }
+    };
 
-    fetchMatches()
-  }, [navigate, toast, userId])
+    fetchMatches();
+  }, [skip, limit]);
 
-  // Filtrar matches según la pestaña activa y el término de búsqueda
-  const filteredMatches = matches.filter((match) => {
-    const matchesSearch =
-      match.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      match.location.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleLoadMore = () => {
+    setSkip((prev) => prev + limit);
+  };
 
-    if (activeTab === "all") return matchesSearch
-    if (activeTab === "messages") return matchesSearch && match.lastMessage
-    if (activeTab === "new") return matchesSearch && !match.lastMessage
-
-    return matchesSearch
-  })
-
-  const handleViewProfile = (matchId) => {
-    navigate(`/profile/${matchId}`)
-  }
-
-  const handleStartChat = (matchId) => {
-    navigate(`/messages/${matchId}`)
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
-        <p>Cargando matches...</p>
-      </div>
-    )
+  if (isLoading && skip === 0) {
+    return <Loader />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Tus Matches</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-black text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,0,128,0.1),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(255,0,128,0.05),transparent_50%)] pointer-events-none"></div>
 
-        {/* Barra de búsqueda */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Buscar por nombre o ubicación..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400"
-            />
-            <Button variant="ghost" size="icon" className="absolute right-1 top-1">
-              <Filter className="h-4 w-4 text-gray-400" />
-            </Button>
+      <header className="p-4 flex items-center relative z-10">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-rose-700 rounded-full flex items-center justify-center shadow-lg">
+            <Heart className="h-5 w-5 text-white" fill="white" />
           </div>
+          <span className="ml-2 font-bold text-xl tracking-tight">HeartSync</span>
         </div>
+      </header>
 
-        {/* Pestañas */}
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid grid-cols-3 bg-gray-800/50">
-            <TabsTrigger value="all" className="data-[state=active]:bg-rose-600">
-              Todos
-            </TabsTrigger>
-            <TabsTrigger value="messages" className="data-[state=active]:bg-rose-600">
-              Con mensajes
-            </TabsTrigger>
-            <TabsTrigger value="new" className="data-[state=active]:bg-rose-600">
-              Nuevos
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <main className="container mx-auto px-4 py-8 max-w-4xl relative z-10">
+        <Card className="border-gray-800 bg-gray-900/50 backdrop-blur-sm shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold flex items-center">
+              <Heart className="h-5 w-5 mr-2 text-rose-500" />
+              Tus Posibles Matches
+            </CardTitle>
+            <CardDescription>Explora personas que comparten tus intereses</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            {error && (
+              <Alert variant="destructive" className="bg-red-900/20 border-red-900 text-red-300 mb-6">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-        {/* Lista de matches */}
-        <div className="space-y-4">
-          {filteredMatches.length > 0 ? (
-            filteredMatches.map((match) => (
-              <div key={match.id} className="transition-all duration-300 hover:scale-[1.01]">
-                <Card className="border-gray-800 bg-gray-900/50 overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="flex flex-col md:flex-row">
-                      {/* Imagen y datos básicos */}
-                      <div className="md:w-1/4 p-4 flex items-center">
-                        <Avatar className="h-16 w-16 mr-4 border-2 border-rose-600">
-                          <AvatarImage src={match.image || "/placeholder.svg"} alt={match.name} />
-                          <AvatarFallback>{match.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold text-lg flex items-center">
-                            {match.name}, {match.age}
-                            {match.lastActive === "En línea" && (
-                              <span className="ml-2 h-2 w-2 rounded-full bg-green-500"></span>
-                            )}
-                          </h3>
-                          <div className="flex items-center text-sm text-gray-400">
-                            <MapPin className="h-3 w-3 mr-1" />
-                            {match.location}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">{match.lastActive}</div>
-                        </div>
-                      </div>
+            {matches.length === 0 && !error && !isLoading && (
+              <div className="flex flex-col items-center justify-center p-8 text-center">
+                <div className="w-20 h-20 bg-gray-800/50 rounded-full flex items-center justify-center mb-4">
+                  <ImageIcon className="h-10 w-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-medium mb-2">No se encontraron matches</h3>
+                <p className="text-gray-400 mb-4 max-w-md">
+                  Ajusta tus preferencias o intenta de nuevo más tarde.
+                </p>
+                <Button
+                  onClick={() => navigate("/perfil")}
+                  className="bg-rose-600 hover:bg-rose-700 text-white"
+                >
+                  Editar Perfil
+                </Button>
+              </div>
+            )}
 
-                      {/* Compatibilidad y coincidencias */}
-                      <div className="md:w-2/4 p-4 border-t md:border-t-0 md:border-l md:border-r border-gray-800">
-                        <div className="flex items-center mb-2">
-                          <Sparkles className="h-4 w-4 text-rose-500 mr-2" />
-                          <span className="text-sm font-medium">Compatibilidad: {match.compatibility}%</span>
-                        </div>
-
-                        <div className="mb-3">
-                          <h4 className="text-xs text-gray-400 mb-1">Intereses en común:</h4>
-                          <div className="flex flex-wrap gap-1">
-                            {match.commonInterests.map((interest) => (
-                              <Badge
-                                key={interest}
-                                className="bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 text-xs"
-                              >
-                                {interest}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <h4 className="text-xs text-gray-400 mb-1">Otras coincidencias:</h4>
-                          <div className="grid grid-cols-2 gap-1">
-                            {Object.entries(match.commonAttributes)
-                              .slice(0, 2)
-                              .map(([key, value]) => (
-                                <div key={key} className="flex items-center text-xs">
-                                  <div className="h-1.5 w-1.5 rounded-full bg-rose-500 mr-1.5"></div>
-                                  <span className="text-gray-300 capitalize">
-                                    {key.replace(/([A-Z])/g, " $1").trim()}: {value}
-                                  </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {matches.map((match, index) => (
+                <Card key={index} className="bg-gray-800/50 border-gray-700">
+                  <CardContent className="p-4">
+                    <div className="relative">
+                      <Carousel className="w-full">
+                        <CarouselContent>
+                          {match.photos && match.photos.length > 0 ? (
+                            match.photos.map((photo, photoIndex) => (
+                              <CarouselItem key={photoIndex} className="basis-full">
+                                <div className="relative aspect-square rounded-xl overflow-hidden">
+                                  <img
+                                    src={photo || "/placeholder.svg"}
+                                    alt={`Foto de ${match.name}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                                    <span className="text-white text-sm font-medium">
+                                      Foto {photoIndex + 1} {photoIndex === 0 && "(Principal)"}
+                                    </span>
+                                  </div>
                                 </div>
-                              ))}
-                          </div>
-                        </div>
+                              </CarouselItem>
+                            ))
+                          ) : (
+                            <CarouselItem className="basis-full">
+                              <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-700 flex items-center justify-center">
+                                <ImageIcon className="h-12 w-12 text-gray-400" />
+                              </div>
+                            </CarouselItem>
+                          )}
+                        </CarouselContent>
+                        <CarouselPrevious className="left-2" />
+                        <CarouselNext className="right-2" />
+                      </Carousel>
+                    </div>
+
+                    <div className="mt-4">
+                      <h3 className="text-lg font-semibold">
+                        {match.name} {match.surname}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <Calendar className="h-4 w-4" />
+                        <span>{match.age} años</span>
+                        <MapPin className="h-4 w-4 ml-2" />
+                        <span>{match.country}</span>
                       </div>
-
-                      {/* Último mensaje y acciones */}
-                      <div className="md:w-1/4 p-4 bg-gray-800/30 flex flex-col justify-between">
-                        {match.lastMessage ? (
-                          <div className="mb-4">
-                            <div className="flex justify-between items-center mb-1">
-                              <h4 className="text-xs text-gray-400">Último mensaje:</h4>
-                              <span className="text-xs text-gray-500">{match.lastMessage.timestamp}</span>
-                            </div>
-                            <p className="text-sm truncate">
-                              {match.lastMessage.unread && (
-                                <span className="inline-block h-2 w-2 rounded-full bg-rose-500 mr-2"></span>
-                              )}
-                              {match.lastMessage.text}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="mb-4">
-                            <Badge className="bg-blue-600/20 text-blue-400 hover:bg-blue-600/30">Nuevo match</Badge>
-                            <p className="text-xs text-gray-400 mt-1">¡Inicia una conversación!</p>
-                          </div>
-                        )}
-
-                        <div className="flex flex-col space-y-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-700 hover:bg-gray-800 w-full justify-between"
-                            onClick={() => handleViewProfile(match.id)}
-                          >
-                            <span className="flex items-center">
-                              <User className="h-4 w-4 mr-2" />
-                              Ver perfil
-                            </span>
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            className="bg-rose-600 hover:bg-rose-700 w-full justify-between"
-                            onClick={() => handleStartChat(match.id)}
-                          >
-                            <span className="flex items-center">
-                              <MessageSquare className="h-4 w-4 mr-2" />
-                              {match.lastMessage ? "Continuar chat" : "Iniciar chat"}
-                            </span>
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div className="mt-2">
+                        <span className="text-sm font-medium text-rose-400">
+                          {match.matchPercentage}% de coincidencia
+                        </span>
                       </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {match.interests.map((interestId) => {
+                          const interest = AVAILABLE_INTERESTS.find((i) => i.id === interestId);
+                          return (
+                            <Badge
+                              key={interestId}
+                              className="bg-rose-600 hover:bg-rose-700 text-white"
+                            >
+                              {interest ? interest.name : interestId}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                      <p className="mt-2 text-sm text-gray-300 line-clamp-2">{match.bio}</p>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-12">
-              <div className="bg-gray-800/50 rounded-full p-4 inline-flex mb-4">
-                <Heart className="h-8 w-8 text-gray-500" />
-              </div>
-              <h3 className="text-xl font-medium mb-2">No se encontraron matches</h3>
-              <p className="text-gray-400 mb-6">
-                {searchTerm
-                  ? "No hay matches que coincidan con tu búsqueda."
-                  : "Sigue explorando para encontrar nuevos matches."}
-              </p>
-              <Button className="bg-rose-600 hover:bg-rose-700" onClick={() => navigate("/discover")}>
-                Descubrir personas
-              </Button>
+              ))}
             </div>
-          )}
-        </div>
-      </div>
+
+            {matches.length > 0 && (
+              <div className="mt-6 flex justify-center">
+                <Button
+                  onClick={handleLoadMore}
+                  className="bg-rose-600 hover:bg-rose-700 text-white"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Cargando..." : "Cargar más"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </main>
+
+      <style jsx global>{`
+        .swal2-popup {
+          border-radius: 1rem;
+        }
+        .swal2-title {
+          font-weight: 600;
+        }
+        .swal-confirm-button {
+          font-weight: 500 !important;
+          border-radius: 0.375rem !important;
+        }
+        .swal2-icon {
+          border-color: #f43f5e !important;
+        }
+      `}</style>
     </div>
-  )
+  );
 }

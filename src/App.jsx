@@ -7,6 +7,8 @@ import MatchesPage from "./pages/MatchesPage"
 import MessagesPage from "./pages/MessagesPage"
 import ProfileEditPage from "./pages/ProfileEditPage"
 import ProfileViewPage from "./pages/ProfileViewPage"
+import CompleteProfilePage from "./pages/CompleteProfilePage"
+import Chat from "./pages/ChatPage"
 
 export default function App() {
   return (
@@ -18,8 +20,10 @@ export default function App() {
         <Route path="/descubrir" element={<DiscoverPage />} />
         <Route path="/matches" element={<MatchesPage />} />
         <Route path="/mensajes" element={<MessagesPage />} />
+        <Route path="/mensajes/:id" element={<Chat />} />
         <Route path="/editar-perfil" element={<ProfileEditPage />} />
-        <Route path="/perfil/:id" element={<ProfileViewPage />} />
+        <Route path="/perfil" element={<ProfileViewPage />} />
+        <Route path="/complete-profile/:id" element={<CompleteProfilePage/>}></Route>
 
         {/* Add more routes as needed */}
       </Routes>

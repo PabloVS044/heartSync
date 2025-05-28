@@ -1,255 +1,274 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Heart, X, Star, Info, ExternalLink, ThumbsUp, Coffee, Music, Book, Film, Plane, MapPin, Sparkles, ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { useToast } from "@/hooks/use-toasts"
-import Navbar from "@/components/navbar"
-import axios from "axios"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { Heart, X, Star, Info, ExternalLink, MapPin, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toasts";
+import Navbar from "@/components/navbar";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { Loader } from "@/components/loader";
+
+// Lista de intereses para mostrar nombres en lugar de IDs
+const AVAILABLE_INTERESTS = [
+  { id: "arte", name: "Arte" },
+  { id: "música", name: "Música" },
+  { id: "cine", name: "Cine" },
+  { id: "lectura", name: "Lectura" },
+  { id: "gastronomía", name: "Gastronomía" },
+  { id: "yoga", name: "Yoga" },
+  { id: "senderismo", name: "Senderismo" },
+  { id: "viajar", name: "Viajar" },
+  { id: "fotografía", name: "Fotografía" },
+  { id: "baile", name: "Baile" },
+  { id: "teatro", name: "Teatro" },
+  { id: "deportes", name: "Deportes" },
+];
 
 export default function DiscoverPage() {
-  const [matches, setMatches] = useState([])
-  const [ads, setAds] = useState([])
-  const [currentMatchIndex, setCurrentMatchIndex] = useState(0)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [direction, setDirection] = useState(null)
-  const [leftAd, setLeftAd] = useState(null)
-  const [rightAd, setRightAd] = useState(null)
-  const [adModalOpen, setAdModalOpen] = useState(false)
-  const [selectedAd, setSelectedAd] = useState(null)
-  const [likeAnimation, setLikeAnimation] = useState(false)
-  const [dislikeAnimation, setDislikeAnimation] = useState(false)
-  const [superlikeAnimation, setSuperlikeAnimation] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
-  const navigate = useNavigate()
+  const [matches, setMatches] = useState([]);
+  const [ads, setAds] = useState([]);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [direction, setDirection] = useState(null);
+  const [leftAd, setLeftAd] = useState(null);
+  const [rightAd, setRightAd] = useState(null);
+  const [adModalOpen, setAdModalOpen] = useState(false);
+  const [selectedAd, setSelectedAd] = useState(null);
+  const [likeAnimation, setLikeAnimation] = useState(false);
+  const [dislikeAnimation, setDislikeAnimation] = useState(false);
+  const [superlikeAnimation, setSuperlikeAnimation] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const userId = localStorage.getItem("userId")
-  const currentMatch = matches[currentMatchIndex]
+  const userId = localStorage.getItem("userId");
+  const currentMatch = matches[currentMatchIndex];
 
   // Fetch matches and personalized ads on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("authToken")
+        const token = localStorage.getItem("authToken");
         if (!token || !userId) {
           toast({
             title: "Sesión expirada",
             description: "Por favor, inicia sesión nuevamente.",
-            variant: "destructive"
-          })
-          navigate("/login")
-          return
+            variant: "destructive",
+          });
+          navigate("/login");
+          return;
         }
 
         // Fetch matches
         const matchesResponse = await axios.get(`http://localhost:3000/users/${userId}/matches`, {
           headers: { Authorization: `Bearer ${token}` },
-          params: { skip: 0, limit: 10 }
-        })
-        const transformedMatches = matchesResponse.data.map(match => ({
+          params: { skip: 0, limit: 10 },
+        });
+        const transformedMatches = matchesResponse.data.map((match) => ({
           id: match.id,
-          name: match.name,
+          name: `${match.name} ${match.surname || ""}`.trim(), // Combine name and surname
           age: match.age,
           location: match.country,
           bio: match.bio || "Sin biografía",
-          distance: "Desconocido",
-          compatibility: Math.min(80 + match.sharedInterests * 5, 95),
+          distance: "Desconocido", // Could be enhanced with geolocation
+          compatibility: Math.round(match.matchPercentage * 100) / 100, // Use matchPercentage from backend
           images: match.photos.length > 0 ? match.photos : ["/placeholder.svg?height=500&width=400"],
-          interests: match.interests || [],
-          commonInterests: match.interests || [],
+          interests: match.interests.map((id) =>
+            AVAILABLE_INTERESTS.find((i) => i.id === id)?.name || id
+          ), // Map interest IDs to names
+          commonInterests: match.interests.map((id) =>
+            AVAILABLE_INTERESTS.find((i) => i.id === id)?.name || id
+          ),
           commonAttributes: {
             country: match.country,
-            activityLevel: match.interests.includes("senderismo") || match.interests.includes("natación") ? "Activo" : "Moderado"
+            activityLevel: match.interests.includes("senderismo") || match.interests.includes("deportes")
+              ? "Activo"
+              : "Moderado",
           },
-          matchType: match.matchType
-        }))
-        setMatches(transformedMatches)
+          matchType: match.matchType,
+        }));
+        setMatches(transformedMatches);
 
         // Fetch personalized ads for the user
         const adsResponse = await axios.get(`http://localhost:3000/ads/user/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
-          params: { skip: 0, limit: 2 }
-        })
-        const fetchedAds = adsResponse.data.map(ad => ({
+          params: { skip: 0, limit: 2 },
+        });
+        const fetchedAds = adsResponse.data.map((ad) => ({
           id: ad.id,
           title: ad.title,
           image: ad.image || "/placeholder.svg?height=600&width=160&text=Anuncio",
           description: ad.description,
           targetedReason: `Basado en tu interés por ${ad.relatedInterests?.join(", ") || "temas relacionados"}.`,
           url: ad.url || "https://example.com",
-          relatedInterests: ad.relatedInterests || []
-        }))
-        
-        setLeftAd(fetchedAds[0] || null)
-        setRightAd(fetchedAds[1] || null)
-        setAds(fetchedAds)
-        setIsLoading(false)
+          relatedInterests: ad.relatedInterests || [],
+        }));
+
+        setLeftAd(fetchedAds[0] || null);
+        setRightAd(fetchedAds[1] || null);
+        setAds(fetchedAds);
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching data:", error.response?.data || error.message)
+        console.error("Error fetching data:", error.response?.data || error.message);
         toast({
           title: "Error",
           description: "No se pudieron cargar los datos. Inténtalo de nuevo.",
-          variant: "destructive"
-        })
-        setIsLoading(false)
+          variant: "destructive",
+        });
+        setIsLoading(false);
         if (error.response?.status === 401 || error.response?.status === 403) {
-          navigate("/login")
+          navigate("/login");
         }
       }
-    }
-    fetchData()
-  }, [navigate, toast, userId])
+    };
+    fetchData();
+  }, [navigate, toast, userId]);
 
   const nextMatch = () => {
-    setCurrentImageIndex(0)
-    setDirection(null)
-    setCurrentMatchIndex((prev) => (prev + 1) % (matches.length || 1))
-  }
+    setCurrentImageIndex(0);
+    setDirection(null);
+    setCurrentMatchIndex((prev) => (prev + 1) % (matches.length || 1));
+  };
 
   const handleNextImage = () => {
     if (currentMatch?.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev + 1) % currentMatch.images.length)
+      setCurrentImageIndex((prev) => (prev + 1) % currentMatch.images.length);
     }
-  }
+  };
 
   const handlePrevImage = () => {
     if (currentMatch?.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev === 0 ? currentMatch.images.length - 1 : prev - 1))
+      setCurrentImageIndex((prev) => (prev === 0 ? currentMatch.images.length - 1 : prev - 1));
     }
-  }
+  };
 
   const handleLike = async () => {
-    if (!currentMatch) return
-    setLikeAnimation(true)
-    setDirection("right")
+    if (!currentMatch) return;
+    setLikeAnimation(true);
+    setDirection("right");
     try {
-      const token = localStorage.getItem("authToken")
+      const token = localStorage.getItem("authToken");
       const response = await axios.post(
         `http://localhost:3000/users/${userId}/like/${currentMatch.id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
-      )
+      );
       toast({
         title: response.data.isMatched ? "¡Match!" : "¡Like enviado!",
         description: response.data.isMatched
           ? `¡Has hecho match con ${currentMatch.name}!`
           : `Has dado like a ${currentMatch.name}`,
-        variant: "success"
-      })
+        variant: "success",
+      });
       setTimeout(() => {
-        setLikeAnimation(false)
-        nextMatch()
-      }, 1000)
+        setLikeAnimation(false);
+        nextMatch();
+      }, 1000);
     } catch (error) {
-      console.error("Error liking user:", error.response?.data || error.message)
+      console.error("Error liking user:", error.response?.data || error.message);
       toast({
         title: "Error",
         description: "No se pudo enviar el like. Inténtalo de nuevo.",
-        variant: "destructive"
-      })
-      setLikeAnimation(false)
+        variant: "destructive",
+      });
+      setLikeAnimation(false);
       if (error.response?.status === 401 || error.response?.status === 403) {
-        navigate("/login")
+        navigate("/login");
       }
     }
-  }
+  };
 
   const handleDislike = async () => {
-    if (!currentMatch) return
-    setDislikeAnimation(true)
-    setDirection("left")
+    if (!currentMatch) return;
+    setDislikeAnimation(true);
+    setDirection("left");
     try {
-      const token = localStorage.getItem("authToken")
+      const token = localStorage.getItem("authToken");
       await axios.post(
         `http://localhost:3000/users/${userId}/dislike/${currentMatch.id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
-      )
+      );
       toast({
         description: `Has pasado de ${currentMatch.name}`,
-      })
+      });
       setTimeout(() => {
-        setDislikeAnimation(false)
-        nextMatch()
-      }, 1000)
+        setDislikeAnimation(false);
+        nextMatch();
+      }, 1000);
     } catch (error) {
-      console.error("Error disliking user:", error.response?.data || error.message)
+      console.error("Error disliking user:", error.response?.data || error.message);
       toast({
         title: "Error",
         description: "No se pudo pasar del usuario. Inténtalo de nuevo.",
-        variant: "destructive"
-      })
-      setDislikeAnimation(false)
+        variant: "destructive",
+      });
+      setDislikeAnimation(false);
       if (error.response?.status === 401 || error.response?.status === 403) {
-        navigate("/login")
+        navigate("/login");
       }
     }
-  }
+  };
 
   const handleSuperlike = async () => {
-    if (!currentMatch) return
-    setSuperlikeAnimation(true)
+    if (!currentMatch) return;
+    setSuperlikeAnimation(true);
     try {
-      const token = localStorage.getItem("authToken")
+      const token = localStorage.getItem("authToken");
       const response = await axios.post(
         `http://localhost:3000/users/${userId}/like/${currentMatch.id}`,
         { superlike: true },
         { headers: { Authorization: `Bearer ${token}` } }
-      )
+      );
       toast({
         title: response.data.isMatched ? "¡Match!" : "¡Super Like enviado!",
         description: response.data.isMatched
           ? `¡Has hecho match con ${currentMatch.name}!`
           : `Has enviado un Super Like a ${currentMatch.name}`,
-        variant: "success"
-      })
+        variant: "success",
+      });
       setTimeout(() => {
-        setSuperlikeAnimation(false)
-        nextMatch()
-      }, 1000)
+        setSuperlikeAnimation(false);
+        nextMatch();
+      }, 1000);
     } catch (error) {
-      console.error("Error superliking user:", error.response?.data || error.message)
+      console.error("Error superliking user:", error.response?.data || error.message);
       toast({
         title: "Error",
         description: "No se pudo enviar el Super Like. Inténtalo de nuevo.",
-        variant: "destructive"
-      })
-      setSuperlikeAnimation(false)
+        variant: "destructive",
+      });
+      setSuperlikeAnimation(false);
       if (error.response?.status === 401 || error.response?.status === 403) {
-        navigate("/login")
+        navigate("/login");
       }
     }
-  }
+  };
 
   const openAdModal = (ad) => {
-    setSelectedAd(ad)
-    setAdModalOpen(true)
-  }
+    setSelectedAd(ad);
+    setAdModalOpen(true);
+  };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
-        <p>Cargando...</p>
-      </div>
-    )
+    return <Loader />; // Use the Loader component
   }
 
   if (!currentMatch) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 text-center">
+        <div className="container mx-auto ms-auto mt-12 py-8 text-center">
           <h2 className="text-2xl font-bold mb-4">No hay más personas para descubrir</h2>
           <p className="text-gray-400 mb-6">Vuelve más tarde o ajusta tus preferencias.</p>
-          <Button onClick={() => navigate("/profile")}>Editar preferencias</Button>
+          <Button onClick={() => navigate("/perfil")}>Editar preferencias</Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -259,9 +278,16 @@ export default function DiscoverPage() {
         {/* Left Ad */}
         {leftAd && (
           <div className="hidden md:block w-40 flex-shrink-0">
-            <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors cursor-pointer" onClick={() => openAdModal(leftAd)}>
+            <Card
+              className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors cursor-pointer"
+              onClick={() => openAdModal(leftAd)}
+            >
               <CardContent className="p-2">
-                <img src={leftAd.image} alt={leftAd.title} className="w-full h-60 object-cover rounded-md mb-2" />
+                <img
+                  src={leftAd.image}
+                  alt={leftAd.title}
+                  className="w-full h-60 object-cover rounded-md mb-2"
+                />
                 <h4 className="text-sm font-semibold truncate">{leftAd.title}</h4>
                 <p className="text-xs text-gray-400">{leftAd.targetedReason}</p>
               </CardContent>
@@ -326,7 +352,10 @@ export default function DiscoverPage() {
                     <h3 className="text-sm font-semibold mb-2">Intereses en común</h3>
                     <div className="flex flex-wrap gap-2">
                       {currentMatch.commonInterests.map((interest) => (
-                        <Badge key={interest} className="bg-rose-600/20 text-rose-400 hover:bg-rose-600/30">
+                        <Badge
+                          key={interest}
+                          className="bg-rose-600/20 text-rose-400 hover:bg-rose-600/30"
+                        >
                           {interest}
                         </Badge>
                       ))}
@@ -379,7 +408,7 @@ export default function DiscoverPage() {
                       variant="outline"
                       size="icon"
                       className="w-14 h-14 rounded-full border-2 border-blue-500 hover:bg-blue-500/10"
-                      onClick={() => navigate(`/profile/${currentMatch.id}`)}
+                      onClick={() => navigate(`/perfil/${currentMatch.id}`)}
                     >
                       <Info className="h-6 w-6 text-blue-500" />
                     </Button>
@@ -393,9 +422,16 @@ export default function DiscoverPage() {
         {/* Right Ad */}
         {rightAd && (
           <div className="hidden md:block w-40 flex-shrink-0">
-            <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors cursor-pointer" onClick={() => openAdModal(rightAd)}>
+            <Card
+              className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors cursor-pointer"
+              onClick={() => openAdModal(rightAd)}
+            >
               <CardContent className="p-2">
-                <img src={rightAd.image} alt={rightAd.title} className="w-full h-60 object-cover rounded-md mb-2" />
+                <img
+                  src={rightAd.image}
+                  alt={rightAd.title}
+                  className="w-full h-60 object-cover rounded-md mb-2"
+                />
                 <h4 className="text-sm font-semibold truncate">{rightAd.title}</h4>
                 <p className="text-xs text-gray-400">{rightAd.targetedReason}</p>
               </CardContent>
@@ -422,7 +458,12 @@ export default function DiscoverPage() {
               ))}
             </div>
             <Button asChild className="w-full bg-rose-600 hover:bg-rose-700">
-              <a href={selectedAd?.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+              <a
+                href={selectedAd?.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center"
+              >
                 Visitar <ExternalLink className="ml-2 h-4 w-4" />
               </a>
             </Button>
@@ -430,5 +471,5 @@ export default function DiscoverPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
