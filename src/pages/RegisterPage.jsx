@@ -53,19 +53,120 @@ const COUNTRIES = [
 
 // Lista de intereses disponibles
 const AVAILABLE_INTERESTS = [
+  // Arte y Cultura
   { id: "arte", name: "Arte" },
-  { id: "música", name: "Música" },
+  { id: "museos", name: "Museos" },
+  { id: "historia", name: "Historia" },
+  { id: "teatro", name: "Teatro" },
   { id: "cine", name: "Cine" },
   { id: "lectura", name: "Lectura" },
-  { id: "gastronomía", name: "Gastronomía" },
-  { id: "yoga", name: "Yoga" },
-  { id: "senderismo", name: "Senderismo" },
-  { id: "viajar", name: "Viajar" },
-  { id: "fotografía", name: "Fotografía" },
-  { id: "baile", name: "Baile" },
-  { id: "teatro", name: "Teatro" },
+  { id: "poesía", name: "Poesía" },
+  { id: "escritura", name: "Escritura" },
+  { id: "filosofía", name: "Filosofía" },
+
+  // Música y Escena
+  { id: "música", name: "Música" },
+  { id: "conciertos", name: "Conciertos" },
+  { id: "tocar_instrumento", name: "Tocar instrumento" },
+  { id: "dj", name: "DJ" },
+  { id: "karaoke", name: "Karaoke" },
+  { id: "canto", name: "Canto" },
+
+  // Actividades físicas y aire libre
   { id: "deportes", name: "Deportes" },
-]
+  { id: "fútbol", name: "Fútbol" },
+  { id: "baloncesto", name: "Baloncesto" },
+  { id: "tenis", name: "Tenis" },
+  { id: "ciclismo", name: "Ciclismo" },
+  { id: "natación", name: "Natación" },
+  { id: "running", name: "Running" },
+  { id: "senderismo", name: "Senderismo" },
+  { id: "acampada", name: "Acampada" },
+  { id: "escalada", name: "Escalada" },
+  { id: "surf", name: "Surf" },
+  { id: "skate", name: "Skate" },
+  { id: "snowboard", name: "Snowboard" },
+  { id: "yoga", name: "Yoga" },
+  { id: "pilates", name: "Pilates" },
+  { id: "crossfit", name: "Crossfit" },
+  { id: "gimnasio", name: "Gimnasio" },
+
+  // Estilo de vida y bienestar
+  { id: "meditación", name: "Meditación" },
+  { id: "espiritualidad", name: "Espiritualidad" },
+  { id: "alimentación_saludable", name: "Alimentación saludable" },
+  { id: "vegetariano", name: "Vegetariano" },
+  { id: "veganismo", name: "Veganismo" },
+  { id: "mascotas", name: "Mascotas" },
+  { id: "voluntariado", name: "Voluntariado" },
+
+  // Tecnología y ciencia
+  { id: "tecnología", name: "Tecnología" },
+  { id: "videojuegos", name: "Videojuegos" },
+  { id: "inteligencia_artificial", name: "Inteligencia Artificial" },
+  { id: "robótica", name: "Robótica" },
+  { id: "astronomía", name: "Astronomía" },
+  { id: "programación", name: "Programación" },
+  { id: "gadgets", name: "Gadgets" },
+
+  // Entretenimiento y cultura pop
+  { id: "anime", name: "Anime" },
+  { id: "manga", name: "Manga" },
+  { id: "series", name: "Series" },
+  { id: "netflix", name: "Netflix" },
+  { id: "marvel", name: "Marvel" },
+  { id: "starwars", name: "Star Wars" },
+  { id: "cosplay", name: "Cosplay" },
+
+  // Hobbies y creativos
+  { id: "fotografía", name: "Fotografía" },
+  { id: "pintura", name: "Pintura" },
+  { id: "manualidades", name: "Manualidades" },
+  { id: "diseño_gráfico", name: "Diseño gráfico" },
+  { id: "moda", name: "Moda" },
+  { id: "dibujo", name: "Dibujo" },
+  { id: "baile", name: "Baile" },
+  { id: "costura", name: "Costura" },
+  { id: "cocina", name: "Cocina" },
+  { id: "repostería", name: "Repostería" },
+  { id: "jardinería", name: "Jardinería" },
+  { id: "coleccionismo", name: "Coleccionismo" },
+
+  // Gastronomía y bebidas
+  { id: "gastronomía", name: "Gastronomía" },
+  { id: "vino", name: "Vino" },
+  { id: "cerveza_artesanal", name: "Cerveza artesanal" },
+  { id: "café", name: "Café" },
+  { id: "cocteles", name: "Cócteles" },
+  { id: "brunch", name: "Brunch" },
+
+  // Viajes y cultura global
+  { id: "viajar", name: "Viajar" },
+  { id: "mochilero", name: "Mochilero" },
+  { id: "idiomas", name: "Idiomas" },
+  { id: "culturas", name: "Culturas del mundo" },
+  { id: "playa", name: "Playa" },
+  { id: "montaña", name: "Montaña" },
+  { id: "roadtrips", name: "Roadtrips" },
+  { id: "aventura", name: "Aventura" },
+
+  // Juegos de mesa y lógica
+  { id: "ajedrez", name: "Ajedrez" },
+  { id: "juegos_de_mesa", name: "Juegos de mesa" },
+  { id: "póker", name: "Póker" },
+  { id: "escape_rooms", name: "Escape rooms" },
+  { id: "trivia", name: "Trivia" },
+
+  // Otros
+  { id: "autos", name: "Autos" },
+  { id: "modificación_vehículos", name: "Modificación de vehículos" },
+  { id: "motocicletas", name: "Motocicletas" },
+  { id: "invertir", name: "Invertir" },
+  { id: "negocios", name: "Negocios" },
+  { id: "memes", name: "Memes" },
+  { id: "redes_sociales", name: "Redes sociales" },
+];
+
 
 export default function RegisterPage() {
   const navigate = useNavigate()
