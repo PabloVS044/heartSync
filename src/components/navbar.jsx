@@ -158,7 +158,7 @@ export default function Navbar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer hover:bg-gray-800 focus:bg-gray-800"
-                  onClick={() => handleNavigation("/perfil/edit")}
+                  onClick={() => handleNavigation("/editar-perfil")}
                 >
                   <span>Editar perfil</span>
                 </DropdownMenuItem>
