@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Heart, X, Star, Info, ExternalLink, MapPin, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, X, Star, Info, ExternalLink, MapPin, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import Navbar from "@/components/navbar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Loader } from "@/components/loader";
+import { LikeAnimation, DislikeAnimation, SuperlikeAnimation } from "@/components/card-animations";
 
 // Lista de intereses para mostrar nombres en lugar de IDs
 const AVAILABLE_INTERESTS = [
@@ -284,7 +285,7 @@ export default function DiscoverPage() {
             >
               <CardContent className="p-2">
                 <img
-                  src={leftAd.image}
+                  src={leftAd.image || "/placeholder.svg"}
                   alt={leftAd.title}
                   className="w-full h-60 object-cover rounded-md mb-2"
                 />
@@ -299,14 +300,16 @@ export default function DiscoverPage() {
         <div className="flex-1 max-w-2xl mx-auto">
           <div className="relative">
             <Card
-              className={`bg-gray-900/50 border-gray-800 transition-transform duration-500 ${
-                direction === "left" ? "-translate-x-full opacity-0" : direction === "right" ? "translate-x-full opacity-0" : ""
+              className={`bg-gray-900/50 border-gray-800 transition-all duration-500 ${
+                direction === "left" ? "card-swipe-left" : 
+                direction === "right" ? "card-swipe-right" : 
+                superlikeAnimation ? "card-swipe-up" : ""
               }`}
             >
               <CardContent className="p-0">
                 <div className="relative">
                   <img
-                    src={currentMatch.images[currentImageIndex]}
+                    src={currentMatch.images[currentImageIndex] || "/placeholder.svg"}
                     alt={currentMatch.name}
                     className="w-full h-[500px] object-cover"
                   />
@@ -343,6 +346,11 @@ export default function DiscoverPage() {
                       Compatibilidad: {currentMatch.compatibility}%
                     </div>
                   </div>
+                  
+                  {/* Animaciones de interacción */}
+                  <LikeAnimation visible={likeAnimation} />
+                  <DislikeAnimation visible={dislikeAnimation} />
+                  <SuperlikeAnimation visible={superlikeAnimation} />
                 </div>
 
                 <div className="p-4">
@@ -380,7 +388,9 @@ export default function DiscoverPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="w-14 h-14 rounded-full border-2 border-yellow-500 hover:bg-yellow-500/10"
+                      className={`w-14 h-14 rounded-full border-2 border-yellow-500 hover:bg-yellow-500/10 transition-transform ${
+                        superlikeAnimation ? "scale-110" : ""
+                      }`}
                       onClick={handleSuperlike}
                       disabled={superlikeAnimation}
                     >
@@ -389,7 +399,9 @@ export default function DiscoverPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="w-14 h-14 rounded-full border-2 border-red-500 hover:bg-red-500/10"
+                      className={`w-14 h-14 rounded-full border-2 border-red-500 hover:bg-red-500/10 transition-transform ${
+                        dislikeAnimation ? "scale-110" : ""
+                      }`}
                       onClick={handleDislike}
                       disabled={dislikeAnimation}
                     >
@@ -398,7 +410,9 @@ export default function DiscoverPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="w-14 h-14 rounded-full border-2 border-green-500 hover:bg-green-500/10"
+                      className={`w-14 h-14 rounded-full border-2 border-green-500 hover:bg-green-500/10 transition-transform ${
+                        likeAnimation ? "scale-110" : ""
+                      }`}
                       onClick={handleLike}
                       disabled={likeAnimation}
                     >
@@ -428,7 +442,7 @@ export default function DiscoverPage() {
             >
               <CardContent className="p-2">
                 <img
-                  src={rightAd.image}
+                  src={rightAd.image || "/placeholder.svg"}
                   alt={rightAd.title}
                   className="w-full h-60 object-cover rounded-md mb-2"
                 />
@@ -448,7 +462,7 @@ export default function DiscoverPage() {
             <DialogDescription className="text-gray-400">{selectedAd?.targetedReason}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <img src={selectedAd?.image} alt={selectedAd?.title} className="w-full h-64 object-cover rounded-md" />
+            <img src={selectedAd?.image || "/placeholder.svg"} alt={selectedAd?.title} className="w-full h-64 object-cover rounded-md" />
             <p>{selectedAd?.description}</p>
             <div className="flex gap-2">
               {selectedAd?.relatedInterests.map((interest) => (

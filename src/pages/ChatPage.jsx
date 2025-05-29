@@ -161,10 +161,6 @@ export default function MessagesPage() {
             : match
         )
       );
-
-      axios
-        .patch(`/api/chats/${activeMatch.chatId}/messages/read`, { userId })
-        .catch((error) => console.error("Error marking messages as read:", error));
     }
   }, [activeMatchId, matches, userId]);
 
