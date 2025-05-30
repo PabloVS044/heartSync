@@ -2,7 +2,7 @@ import { Heart } from "lucide-react";
 
 // Loader Component
 export const Loader = () => (
-  <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center">
+  <div className="fixed inset-0 z-50 bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center">
     <div className="relative flex flex-col items-center">
       {/* Círculos de fondo animados */}
       <div className="absolute inset-0 flex items-center justify-center">
