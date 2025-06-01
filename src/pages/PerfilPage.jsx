@@ -182,7 +182,7 @@ export default function EnhancedProfilePage() {
         }
 
         // Fetch user profile
-        const userResponse = await axios.get(`http://localhost:3000/users/${userId}`, {
+        const userResponse = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${userId}`, {
           headers: { Authorization: `Bearer ${authToken}` },
         })
 
@@ -212,7 +212,7 @@ export default function EnhancedProfilePage() {
         setSelectedInterests(transformedUser.interests || [])
 
         // Fetch user statistics
-        const statsResponse = await axios.get(`http://localhost:3000/users/${userId}/statistics`, {
+        const statsResponse = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${userId}/statistics`, {
           headers: { Authorization: `Bearer ${authToken}` },
         })
 
@@ -337,7 +337,7 @@ export default function EnhancedProfilePage() {
   const setMainPhoto = async (photoIndex) => {
     try {
       await axios.put(
-        `http://localhost:3000/users/${userId}/main-photo`,
+        `https://heartsync-backend-xoba.onrender.com/users/${userId}/main-photo`,
         { mainPhotoIndex: photoIndex },
         { headers: { Authorization: `Bearer ${authToken}` } },
       )
@@ -367,7 +367,7 @@ export default function EnhancedProfilePage() {
       const formData = new FormData()
       formData.append("photo", photoFile)
 
-      await axios.post(`http://localhost:3000/users/${userId}/photos`, formData, {
+      await axios.post(`https://heartsync-backend-xoba.onrender.com/users/${userId}/photos`, formData, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           "Content-Type": "multipart/form-data",
@@ -375,7 +375,7 @@ export default function EnhancedProfilePage() {
       })
 
       // Refresh user data to get new photo list
-      const userResponse = await axios.get(`http://localhost:3000/users/${userId}`, {
+      const userResponse = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${userId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       })
 
@@ -412,7 +412,7 @@ export default function EnhancedProfilePage() {
     try {
       const photoId = user.photos[photoIndex].split("/").pop()
 
-      await axios.delete(`http://localhost:3000/users/${userId}/photos/${photoId}`, {
+      await axios.delete(`https://heartsync-backend-xoba.onrender.com/users/${userId}/photos/${photoId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       })
 
@@ -458,7 +458,7 @@ export default function EnhancedProfilePage() {
       }
 
       await axios.put(
-        `http://localhost:3000/users/${userId}`,
+        `https://heartsync-backend-xoba.onrender.com/users/${userId}`,
         {
           name: updatedUser.name,
           surname: updatedUser.surname,
@@ -493,7 +493,7 @@ export default function EnhancedProfilePage() {
 
   const handleDeleteAccount = async () => {
     try {
-      await axios.delete(`http://localhost:3000/users/${userId}`, {
+      await axios.delete(`https://heartsync-backend-xoba.onrender.com/users/${userId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       })
 

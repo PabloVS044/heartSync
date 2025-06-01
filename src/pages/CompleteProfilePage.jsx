@@ -548,7 +548,7 @@ export default function CompleteProfilePage() {
         const id = localStorage.getItem("userId")
         console.log("hola q ase", id)
         await axios.put(
-          `http://localhost:3000/users/profile/${id}`,
+          `https://heartsync-backend-xoba.onrender.com/users/profile/${id}`,
           {
             ...formData,
             age: Number.parseInt(formData.age),

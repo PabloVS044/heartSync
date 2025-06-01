@@ -167,7 +167,7 @@ export default function DiscoverPage() {
         }
 
         // Fetch matches
-        const matchesResponse = await axios.get(`http://localhost:3000/users/${userId}/matches`, {
+        const matchesResponse = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${userId}/matches`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { skip: 0, limit: 10 },
         })
@@ -192,7 +192,7 @@ export default function DiscoverPage() {
         setMatches(transformedMatches)
 
         // Fetch personalized ads for the user
-        const adsResponse = await axios.get(`http://localhost:3000/ads/user/${userId}`, {
+        const adsResponse = await axios.get(`https://heartsync-backend-xoba.onrender.com/ads/user/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { skip: 0, limit: 2 },
         })
@@ -258,7 +258,7 @@ export default function DiscoverPage() {
     try {
       const token = localStorage.getItem("authToken")
       const response = await axios.post(
-        `http://localhost:3000/users/${userId}/like/${currentMatch.id}`,
+        `https://heartsync-backend-xoba.onrender.com/users/${userId}/like/${currentMatch.id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       )
@@ -311,7 +311,7 @@ export default function DiscoverPage() {
     try {
       const token = localStorage.getItem("authToken")
       await axios.post(
-        `http://localhost:3000/users/${userId}/dislike/${currentMatch.id}`,
+        `https://heartsync-backend-xoba.onrender.com/users/${userId}/dislike/${currentMatch.id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       )

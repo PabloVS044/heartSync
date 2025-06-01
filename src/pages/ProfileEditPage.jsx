@@ -91,7 +91,7 @@ export default function ProfileEditPage() {
         const decoded = jwtDecode(token)
         const userId = decoded.userId
 
-        const response = await axios.get(`http://localhost:3000/users/${userId}`, {
+        const response = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
 
@@ -184,7 +184,7 @@ export default function ProfileEditPage() {
         internationalMode: editedData.privacy.profileVisibility === "public",
       }
 
-      const response = await axios.put(`http://localhost:3000/users/${userId}/profile`, updateData, {
+      const response = await axios.put(`https://heartsync-backend-xoba.onrender.com/users/${userId}/profile`, updateData, {
         headers: { Authorization: `Bearer ${token}` },
       })
 

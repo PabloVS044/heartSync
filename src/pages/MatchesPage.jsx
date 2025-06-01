@@ -53,7 +53,7 @@ export default function MatchesPage() {
           throw new Error("Usuario no autenticado");
         }
 
-        const response = await axios.get(`http://localhost:3000/users/${userId}/matchesUser`, {
+        const response = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${userId}/matchesUser`, {
           params: { skip, limit },
           headers: { Authorization: `Bearer ${token}` },
         });

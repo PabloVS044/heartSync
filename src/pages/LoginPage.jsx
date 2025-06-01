@@ -55,7 +55,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await axios.post("http://localhost:3000/users/login", {
+      const response = await axios.post("https://heartsync-backend-xoba.onrender.com/users/login", {
         email,
         password,
       })
@@ -106,7 +106,7 @@ export default function LoginPage() {
   const handleGoogleLoginSuccess = async (credentialResponse) => {
     setIsLoading(true)
     try {
-      const response = await axios.post("http://localhost:3000/users/google-login", {
+      const response = await axios.post("https://heartsync-backend-xoba.onrender.com/users/google-login", {
         token: credentialResponse.credential,
       })
       const { token, userId } = response.data
@@ -114,7 +114,7 @@ export default function LoginPage() {
       localStorage.setItem("userId", userId)
 
       // Fetch user to check for missing fields
-      const userResponse = await axios.get(`http://localhost:3000/users/${userId}`, {
+      const userResponse = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const user = userResponse.data

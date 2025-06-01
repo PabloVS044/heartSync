@@ -672,7 +672,7 @@ export default function RegisterPage() {
           internationalMode: formData.internationalMode,
         }
 
-        const response = await fetch("http://localhost:3000/users", {
+        const response = await fetch("https://heartsync-backend-xoba.onrender.com/users", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -67,24 +67,24 @@ useEffect(() => {
       }
 
       // Fetch current user
-      console.log(`Fetching current user: http://localhost:3000/api/users/miPerfil/${id}`);
-      const currentUserResponse = await axios.get(`http://localhost:3000/users/miPerfil/${id}`, {
+      console.log(`Fetching current user: https://heartsync-backend-xoba.onrender.com/api/users/miPerfil/${id}`);
+      const currentUserResponse = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/miPerfil/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Current user response:", currentUserResponse.data);
       setCurrentUser(currentUserResponse.data);
 
       // Fetch profile user
-      console.log(`Fetching profile: http://localhost:3000/users/${id}`);
-      const profileResponse = await axios.get(`http://localhost:3000/users/${id}`, {
+      console.log(`Fetching profile: https://heartsync-backend-xoba.onrender.com/users/${id}`);
+      const profileResponse = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Profile response:", profileResponse.data);
       setProfileData({ ...profileResponse.data, matchStatus: "none", conversationStarted: false });
 
       // Fetch matches
-      console.log(`Fetching matches: http://localhost:3000/users/${id}/matches`);
-      const matchesResponse = await axios.get(`http://localhost:3000/users/${id}/matches`, {
+      console.log(`Fetching matches: https://heartsync-backend-xoba.onrender.com/users/${id}/matches`);
+      const matchesResponse = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${id}/matches`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Matches response:", matchesResponse.data);
@@ -156,7 +156,7 @@ useEffect(() => {
     setLikeAnimation(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await axios.post(`http://localhost:3000/users/${currentUser.id}/like/${id}`, {}, {
+      const response = await axios.post(`https://heartsync-backend-xoba.onrender.com/users/${currentUser.id}/like/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast({
@@ -185,7 +185,7 @@ useEffect(() => {
     setSuperlikeAnimation(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await axios.post(`http://localhost:3000/users/${currentUser.id}/like/${id}`, {}, {
+      const response = await axios.post(`https://heartsync-backend-xoba.onrender.com/users/${currentUser.id}/like/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast({
@@ -229,7 +229,7 @@ useEffect(() => {
   const confirmUnmatch = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      await axios.post(`http://localhost:3000/users/${currentUser.id}/dislike/${id}`, {}, {
+      await axios.post(`https://heartsync-backend-xoba.onrender.com/users/${currentUser.id}/dislike/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast({

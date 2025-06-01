@@ -186,7 +186,7 @@ export default function MessagesPage() {
 
       try {
         const token = localStorage.getItem("authToken");
-        const response = await axios.get(`http://localhost:3000/matches/user/${userId}`, {
+        const response = await axios.get(`https://heartsync-backend-xoba.onrender.com/matches/user/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -234,7 +234,7 @@ export default function MessagesPage() {
             if (!chat.id) {
               try {
                 const chatResponse = await axios.post(
-                  `http://localhost:3000/chats`,
+                  `https://heartsync-backend-xoba.onrender.com/chats`,
                   { matchId: item.match.id },
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -327,7 +327,7 @@ export default function MessagesPage() {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.patch(
-        `http://localhost:3000/chats/${activeMatch.chatId}/messages/read`,
+        `https://heartsync-backend-xoba.onrender.com/chats/${activeMatch.chatId}/messages/read`,
         { userId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -378,7 +378,7 @@ export default function MessagesPage() {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        `http://localhost:3000/chats/${activeMatch.chatId}/messages`,
+        `https://heartsync-backend-xoba.onrender.com/chats/${activeMatch.chatId}/messages`,
         { senderId: userId, content: message },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -406,7 +406,7 @@ export default function MessagesPage() {
         const cloudinaryUrl = await uploadToCloudinary(files[0]);
         const token = localStorage.getItem("authToken");
         const response = await axios.post(
-          `http://localhost:3000/chats/${activeMatch.chatId}/messages`,
+          `https://heartsync-backend-xoba.onrender.com/chats/${activeMatch.chatId}/messages`,
           { senderId: userId, content: "📷 Imagen", image: cloudinaryUrl },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -440,7 +440,7 @@ export default function MessagesPage() {
         const cloudinaryUrl = await uploadToCloudinary(files[0]);
         const token = localStorage.getItem("authToken");
         const response = await axios.post(
-          `http://localhost:3000/chats/${activeMatch.chatId}/messages`,
+          `https://heartsync-backend-xoba.onrender.com/chats/${activeMatch.chatId}/messages`,
           { senderId: userId, content: "📷 Imagen", image: cloudinaryUrl },
           { headers: { Authorization: `Bearer ${token}` } }
         );

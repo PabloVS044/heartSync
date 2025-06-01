@@ -40,7 +40,7 @@ export default function Navbar() {
         return
       }
 
-      const response = await axios.get(`http://localhost:3000/users/${userId}`, {
+      const response = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -85,7 +85,7 @@ export default function Navbar() {
       const token = localStorage.getItem("authToken")
       if (!token || !userId) return 0
 
-      const response = await axios.get(`http://localhost:3000/users/${userId}`, {
+      const response = await axios.get(`https://heartsync-backend-xoba.onrender.com/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
