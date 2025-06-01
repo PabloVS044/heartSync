@@ -1,193 +1,247 @@
-# ❤️ HeartSync: Connecting Hearts Across Generations
 
-A modern dating app designed to foster meaningful connections between women and younger men. Discover authentic relationships based on shared interests and mutual respect. ✨
+  
 
-## 🚀 Installation
+# ❤️ HeartSync: Conectando Corazones entre Generaciones
 
-Get HeartSync up and running locally with these simple steps:
+  
 
-- ⬇️ **Clone the Repository:**
+**HeartSync** es una app de citas moderna pensada para fomentar conexiones auténticas entre mujeres maduras y hombres jóvenes. Una plataforma donde el respeto, los intereses compartidos y la afinidad intergeneracional son el centro de todo. ✨
 
-```bash
-git clone https://github.com/PabloVS044/heartSync.git
-```
+  
 
-- 🛠️ **Navigate to the Project Directory:**
+---
 
-```bash
-cd heartSync
-```
+  
 
-- 📦 **Install Dependencies:**
+## 🚀 Instalación
 
-```bash
-npm install
-```
+  
 
-- ⚙️ **Configure Environment Variables:**
+Sigue estos pasos para ejecutar el proyecto localmente:
 
-  Create a `.env` file in the project root and add your environment variables:
+  
 
-```
-VITE_APP_GOOGLE_CLIENT_ID=your_google_client_id
-VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-VITE_CLOUDINARY_UPLOAD_PRESET=your_cloudinary_upload_preset
-```
+1. ⬇️ **Clonar el repositorio**
 
-- 🚀 **Start the Development Server:**
+  
 
 ```bash
-npm run dev
+
+git  clone  https://github.com/PabloVS044/heartSync.git
+
 ```
 
-## 💻 Usage
+  
 
-### Landing Page
+2. 📁 **Entrar en el directorio del proyecto**
 
-Showcasing the project's objective, main features, and general look and feel.
+  
 
-<details>
-<summary><b>View Landing Page Code</b></summary>
+```bash
 
-```jsx
-import { useState, useEffect } from "react";
-import {
-  Search,
-  MessageSquare,
-  Users,
-  Heart,
-  ArrowRight,
-  Star,
-  Shield,
-  Calendar,
-  Menu,
-  X,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+cd  heartSync
 
-export default function LandingPage() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const testimonials = [
-    {
-      name: "María",
-      age: 45,
-      location: "Madrid",
-      image: "/placeholder.svg?height=48&width=48",
-      text: "Después de mi divorcio, pensé que no encontraría a nadie. HeartSync me conectó con David, y llevamos 2 años juntos. La diferencia de edad nunca ha sido un problema.",
-    },
-    {
-      name: "Carlos",
-      age: 32,
-      location: "Barcelona",
-      image: "/placeholder.svg?height=48&width=48",
-      text: "Siempre me han atraído las mujeres maduras. En HeartSync encontré a Sofía, una mujer increíble que comparte mis intereses y me ha enseñado tanto.",
-    },
-    {
-      name: "Elena",
-      age: 50,
-      location: "Valencia",
-      image: "/placeholder.svg?height=48&width=48",
-      text: "HeartSync me dio la confianza para volver a salir después de años de estar soltera. Conocí a Miguel, que es 15 años menor que yo, y tenemos una relación maravillosa basada en el respeto mutuo.",
-    },
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTestimonialIndex((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [testimonials.length]);
-
-  const stats = [
-    { value: "10K+", label: "Usuarios activos" },
-    { value: "85%", label: "Tasa de éxito" },
-    { value: "4.8", label: "Calificación promedio" },
-  ];
-
-  const handleNavigation = (e, id) => {
-    e.preventDefault();
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-    setMobileMenuOpen(false);
-  };
-
-  const handleRegister = (e) => {
-    e.preventDefault();
-    window.location.href = "/registro";
-  };
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    window.location.href = "/login";
-  };
-
-  return (<></>)
-}
 ```
-</details>
 
-## ✨ Features
+  
 
-- 💘 **Age-Gap Connections:** Connect with people outside of the current status quo.
-- 💬 **Real-time Messaging:** Instant chat to spark meaningful conversations.
-- 🔒 **Profile Verification:** Verified profiles for added safety and authenticity.
-- 🌍 **Global Reach:** Connect with singles locally or internationally.
-- 💖 **Personalized Matching:** Powerful algorithms to find your perfect match.
+3. 📦 **Instalar dependencias**
 
-## 🛠️ Technologies Used
+  
 
-| Technology           | Description                               | Link                                       |
-| :------------------- | :---------------------------------------- | :----------------------------------------- |
-| React                | Frontend framework                        | [https://react.dev/](https://react.dev/)   |
-| Tailwind CSS         | CSS framework                             | [https://tailwindcss.com/](https://tailwindcss.com/) |
-| Radix UI             | UI component library                      | [https://www.radix-ui.com/](https://www.radix-ui.com/) |
-| Axios                | HTTP client for making API requests     | [https://axios-http.com/](https://axios-http.com/) |
-| Socket.IO            | Realtime, bidirectional event-based communication | [https://socket.io/](https://socket.io/)         |
-| Dokugen            | README generation                        | [https://www.npmjs.com/package/dokugen](https://www.npmjs.com/package/dokugen)         |
+```bash
 
-## 🤝 Contributing
+npm  install
 
-We welcome contributions to enhance HeartSync! Please follow these guidelines:
+```
 
-- 🐞 **Report Bugs:** Help us squash those pesky bugs!
-- 💡 **Suggest Features:** Share your ideas to make HeartSync even better.
-- 🛠️ **Submit Pull Requests:** Contribute code improvements and new features.
+  
 
-## 📜 License
+4. ⚙️ **Configurar variables de entorno**
 
-This project is under the [MIT License](https://opensource.org/license/mit/).
+  
 
-## 🧑‍💻 Author Info
+Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 
-- Pablo:  [Github](https://github.com/PabloVS044)
+  
 
-## 🏅 Badges
+```env
 
-[![Website shields.io](https://img.shields.io/website-up-down-green-red/http/shields.io.svg)](http://shields.io/)
-[![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://GitHub.com/Naereen/ama)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+VITE_APP_GOOGLE_CLIENT_ID=tu_google_client_id
 
-[![Readme was generated by Dokugen](https://img.shields.io/badge/Readme%20was%20generated%20by-Dokugen-brightgreen)](https://www.npmjs.com/package/dokugen)
+VITE_CLOUDINARY_CLOUD_NAME=tu_nombre_de_nube_cloudinary
+
+VITE_CLOUDINARY_UPLOAD_PRESET=tu_upload_preset
+
+NEO4J_URI=tu_uri_de_neo4j
+
+NEO4J_USER=tu_usuario_de_neo4j
+
+NEO4J_PASSWORD=tu_contraseña_de_neo4j
+
+PORT=tu_puerto_de_ejecución
+
+JWT_SECRET=tu_clave_de_jwt
+
+```
+
+  
+
+5. ▶️ **Iniciar el servidor de desarrollo**
+
+  
+
+```bash
+
+npm  run  dev
+
+```
+
+  
+
+---
+
+  
+
+## 🖼️ Vista previa
+
+  
+
+> ✨ ¡Explora cómo luce HeartSync en acción!
+
+  
+
+![Vista previa de HeartSync](/src/assets/landing.png)
+
+  
+
+---
+
+  
+
+## ✨ Funcionalidades principales
+
+  
+
+- 💘 **Conexiones con diferencia de edad:** Rompe con lo convencional y descubre nuevas formas de amar.
+
+- 💬 **Mensajería en tiempo real:** Conversaciones instantáneas y seguras.
+
+- 🔒 **Verificación de perfiles:** Seguridad y autenticidad para una experiencia confiable.
+
+- 🌍 **Alcance global:** Encuentra personas afines cerca o en cualquier parte del mundo.
+
+- 🎯 **Matching personalizado:** Algoritmo que conecta intereses, valores y compatibilidad real.
+
+  
+
+---
+
+  
+
+## 💻 Tecnologías utilizadas
+
+  
+
+| Tecnología | Descripción | Enlace |
+
+|----------------|----------------------------------------------|-------------------------------------------|
+
+| React | Framework para la interfaz de usuario | [react.dev](https://react.dev/) |
+
+| Tailwind CSS | Framework de estilos moderno y ágil | [tailwindcss.com](https://tailwindcss.com/) |
+
+| Radix UI | Componentes accesibles y estilables | [radix-ui.com](https://www.radix-ui.com/) |
+
+| Axios | Cliente HTTP para llamadas a API | [axios-http.com](https://axios-http.com/) |
+
+| Socket.IO | Comunicación en tiempo real por WebSockets | [socket.io](https://socket.io/) |
+
+  
+
+---
+
+  
+
+## 👥 Testimonios reales
+
+  
+
+> _“Después de mi divorcio, pensé que no volvería a enamorarme. HeartSync me conectó con David y llevamos más de dos años juntos. La diferencia de edad nunca fue un problema.”_
+
+> — **María, 45 años, Madrid**
+
+  
+
+> _“Siempre admiré a las mujeres con más experiencia. Aquí conocí a Sofía, y cada día aprendo algo nuevo con ella.”_
+
+> — **Carlos, 32 años, Barcelona**
+
+  
+
+> _“Me sentía insegura para volver a salir, pero esta app me dio confianza. Miguel y yo tenemos 15 años de diferencia y una relación maravillosa.”_
+
+> — **Elena, 50 años, Valencia**
+
+  
+
+---
+
+  
+
+## 🤝 Contribuciones
+
+  
+
+¡Tus aportes son bienvenidos!
+
+  
+
+- 🐞 Reporta errores o comportamientos inesperados.
+
+- 💡 Sugiere ideas o nuevas funciones.
+
+- 📥 Envía un Pull Request con mejoras o correcciones.
+
+  
+
+---
+
+  
+
+## 📜 Licencia
+
+  
+
+Este proyecto está licenciado bajo la [MIT License](https://opensource.org/license/mit/).
+
+  
+
+---
+
+  
+
+## 👤 Autor
+
+  
+
+- Pablo: [GitHub](https://github.com/PabloVS044)
+
+  
+
+---
+
+  
+
+## 🏅 Insignias
+
+  
+
+[![Sitio activo](https://img.shields.io/website-up-down-green-red/http/shields.io.svg)](http://shields.io/)
+
+[![Pregúntame cualquier cosa](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://GitHub.com/Naereen/ama)
+
+[![Mantenimiento](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+
+  
+
