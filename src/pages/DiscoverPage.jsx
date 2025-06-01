@@ -448,7 +448,7 @@ export default function DiscoverPage() {
                     <p className="text-sm mb-4">{currentMatch.bio}</p>
 
                     <div className="mb-4">
-                      <h3 className="text-sm font-semibold mb-2">Intereses en común</h3>
+                      <h3 className="text-sm font-semibold mb-2">Intereses</h3>
                       <div className="flex flex-wrap gap-2">
                         {currentMatch.commonInterests.map((interest) => (
                           <Badge key={interest} className="bg-rose-600/20 text-rose-400 hover:bg-rose-600/30">
