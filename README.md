@@ -139,23 +139,15 @@ npm  run  dev
 
   
 
-## 💻 Tecnologías utilizadas
+## 🛠️ Technologies UsedAdd commentMore actions
 
-  
-
-| Tecnología | Descripción | Enlace |
-
-|----------------|----------------------------------------------|-------------------------------------------|
-
-| React | Framework para la interfaz de usuario | [react.dev](https://react.dev/) |
-
-| Tailwind CSS | Framework de estilos moderno y ágil | [tailwindcss.com](https://tailwindcss.com/) |
-
-| Radix UI | Componentes accesibles y estilables | [radix-ui.com](https://www.radix-ui.com/) |
-
-| Axios | Cliente HTTP para llamadas a API | [axios-http.com](https://axios-http.com/) |
-
-| Socket.IO | Comunicación en tiempo real por WebSockets | [socket.io](https://socket.io/) |
+| Technology           | Description                               | Link                                       |
+| :------------------- | :---------------------------------------- | :----------------------------------------- |
+| React                | Frontend framework                        | [https://react.dev/](https://react.dev/)   |
+| Tailwind CSS         | CSS framework                             | [https://tailwindcss.com/](https://tailwindcss.com/) |
+| Radix UI             | UI component library                      | [https://www.radix-ui.com/](https://www.radix-ui.com/) |
+| Axios                | HTTP client for making API requests     | [https://axios-http.com/](https://axios-http.com/) |
+| Socket.IO            | Realtime, bidirectional event-based communication | [https://socket.io/](https://socket.io/)         |
 
   
 
