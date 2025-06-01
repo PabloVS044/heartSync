@@ -73,15 +73,6 @@ VITE_CLOUDINARY_CLOUD_NAME=tu_nombre_de_nube_cloudinary
 
 VITE_CLOUDINARY_UPLOAD_PRESET=tu_upload_preset
 
-NEO4J_URI=tu_uri_de_neo4j
-
-NEO4J_USER=tu_usuario_de_neo4j
-
-NEO4J_PASSWORD=tu_contraseña_de_neo4j
-
-PORT=tu_puerto_de_ejecución
-
-JWT_SECRET=tu_clave_de_jwt
 
 ```
 
