@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import axios from "axios"
 import {
@@ -48,60 +48,216 @@ const COUNTRIES = [
   { code: "CA", name: "Canadá" },
 ].sort((a, b) => a.name.localeCompare(b.name))
 
-// Lista de intereses disponibles
 const AVAILABLE_INTERESTS = [
+  // Arte y Cultura
   { id: "arte", name: "Arte" },
-  { id: "música", name: "Música" },
+  { id: "museos", name: "Museos" },
+  { id: "historia", name: "Historia" },
+  { id: "teatro", name: "Teatro" },
   { id: "cine", name: "Cine" },
   { id: "lectura", name: "Lectura" },
-  { id: "gastronomía", name: "Gastronomía" },
-  { id: "yoga", name: "Yoga" },
-  { id: "senderismo", name: "Senderismo" },
-  { id: "viajar", name: "Viajar" },
-  { id: "fotografía", name: "Fotografía" },
-  { id: "baile", name: "Baile" },
-  { id: "teatro", name: "Teatro" },
-  { id: "deportes", name: "Deportes" },
-]
+  { id: "poesía", name: "Poesía" },
+  { id: "escritura", name: "Escritura" },
+  { id: "filosofía", name: "Filosofía" },
 
-const CustomSlider = ({ value, onValueChange, min, max, step }) => {
+  // Música y Escena
+  { id: "música", name: "Música" },
+  { id: "conciertos", name: "Conciertos" },
+  { id: "tocar_instrumento", name: "Tocar instrumento" },
+  { id: "dj", name: "DJ" },
+  { id: "karaoke", name: "Karaoke" },
+  { id: "canto", name: "Canto" },
+
+  // Actividades físicas y aire libre
+  { id: "deportes", name: "Deportes" },
+  { id: "fútbol", name: "Fútbol" },
+  { id: "baloncesto", name: "Baloncesto" },
+  { id: "tenis", name: "Tenis" },
+  { id: "ciclismo", name: "Ciclismo" },
+  { id: "natación", name: "Natación" },
+  { id: "running", name: "Running" },
+  { id: "senderismo", name: "Senderismo" },
+  { id: "acampada", name: "Acampada" },
+  { id: "escalada", name: "Escalada" },
+  { id: "surf", name: "Surf" },
+  { id: "skate", name: "Skate" },
+  { id: "snowboard", name: "Snowboard" },
+  { id: "yoga", name: "Yoga" },
+  { id: "pilates", name: "Pilates" },
+  { id: "crossfit", name: "Crossfit" },
+  { id: "gimnasio", name: "Gimnasio" },
+
+  // Estilo de vida y bienestar
+  { id: "meditación", name: "Meditación" },
+  { id: "espiritualidad", name: "Espiritualidad" },
+  { id: "alimentación_saludable", name: "Alimentación saludable" },
+  { id: "vegetariano", name: "Vegetariano" },
+  { id: "veganismo", name: "Veganismo" },
+  { id: "mascotas", name: "Mascotas" },
+  { id: "voluntariado", name: "Voluntariado" },
+
+  // Tecnología y ciencia
+  { id: "tecnología", name: "Tecnología" },
+  { id: "videojuegos", name: "Videojuegos" },
+  { id: "inteligencia_artificial", name: "Inteligencia Artificial" },
+  { id: "robótica", name: "Robótica" },
+  { id: "astronomía", name: "Astronomía" },
+  { id: "programación", name: "Programación" },
+  { id: "gadgets", name: "Gadgets" },
+
+  // Entretenimiento y cultura pop
+  { id: "anime", name: "Anime" },
+  { id: "manga", name: "Manga" },
+  { id: "series", name: "Series" },
+  { id: "netflix", name: "Netflix" },
+  { id: "marvel", name: "Marvel" },
+  { id: "starwars", name: "Star Wars" },
+  { id: "cosplay", name: "Cosplay" },
+
+  // Hobbies y creativos
+  { id: "fotografía", name: "Fotografía" },
+  { id: "pintura", name: "Pintura" },
+  { id: "manualidades", name: "Manualidades" },
+  { id: "diseño_gráfico", name: "Diseño gráfico" },
+  { id: "moda", name: "Moda" },
+  { id: "dibujo", name: "Dibujo" },
+  { id: "baile", name: "Baile" },
+  { id: "costura", name: "Costura" },
+  { id: "cocina", name: "Cocina" },
+  { id: "repostería", name: "Repostería" },
+  { id: "jardinería", name: "Jardinería" },
+  { id: "coleccionismo", name: "Coleccionismo" },
+
+  // Gastronomía y bebidas
+  { id: "gastronomía", name: "Gastronomía" },
+  { id: "vino", name: "Vino" },
+  { id: "cerveza_artesanal", name: "Cerveza artesanal" },
+  { id: "café", name: "Café" },
+  { id: "cocteles", name: "Cócteles" },
+  { id: "brunch", name: "Brunch" },
+
+  // Viajes y cultura global
+  { id: "viajar", name: "Viajar" },
+  { id: "mochilero", name: "Mochilero" },
+  { id: "idiomas", name: "Idiomas" },
+  { id: "culturas", name: "Culturas del mundo" },
+  { id: "playa", name: "Playa" },
+  { id: "montaña", name: "Montaña" },
+  { id: "roadtrips", name: "Roadtrips" },
+  { id: "aventura", name: "Aventura" },
+
+  // Juegos de mesa y lógica
+  { id: "ajedrez", name: "Ajedrez" },
+  { id: "juegos_de_mesa", name: "Juegos de mesa" },
+  { id: "póker", name: "Póker" },
+  { id: "escape_rooms", name: "Escape rooms" },
+  { id: "trivia", name: "Trivia" },
+
+  // Otros
+  { id: "autos", name: "Autos" },
+  { id: "modificación_vehículos", name: "Modificación de vehículos" },
+  { id: "motocicletas", name: "Motocicletas" },
+  { id: "invertir", name: "Invertir" },
+  { id: "negocios", name: "Negocios" },
+  { id: "memes", name: "Memes" },
+  { id: "redes_sociales", name: "Redes sociales" },
+];
+
+const CustomSlider = ({ value, onValueChange, min, max, step = 1 }) => {
   const [localValues, setLocalValues] = useState(value)
   const [dragIndex, setDragIndex] = useState(-1)
+  const sliderRef = useRef(null)
 
-  const handleMouseDown = (index) => {
-    setDragIndex(index)
-  }
-
-  const handleMouseUp = () => {
-    setDragIndex(-1)
-  }
+  // Sincronizar con props cuando cambien
+  useEffect(() => {
+    setLocalValues(value)
+  }, [value])
 
   const calculatePosition = (val) => {
     return ((val - min) / (max - min)) * 100
   }
 
+  const calculateValueFromPosition = (position, rect) => {
+    const percentage = Math.max(0, Math.min(1, position / rect.width))
+    const rawValue = min + percentage * (max - min)
+    return Math.round(rawValue / step) * step
+  }
+
+  const handleMouseDown = (index) => (e) => {
+    e.preventDefault()
+    setDragIndex(index)
+  }
+
+  const handleMouseMove = useCallback((e) => {
+    if (dragIndex === -1 || !sliderRef.current) return
+
+    const rect = sliderRef.current.getBoundingClientRect()
+    const newValue = calculateValueFromPosition(e.clientX - rect.left, rect)
+    
+    setLocalValues(prev => {
+      let newValues = [...prev]
+      
+      if (dragIndex === 0) {
+        // Arrastrar el handle izquierdo
+        newValues[0] = Math.max(min, Math.min(newValue, newValues[1] - step))
+      } else {
+        // Arrastrar el handle derecho
+        newValues[1] = Math.min(max, Math.max(newValue, newValues[0] + step))
+      }
+      
+      // Solo llamar onValueChange si los valores cambiaron
+      if (newValues[0] !== prev[0] || newValues[1] !== prev[1]) {
+        onValueChange(newValues)
+      }
+      
+      return newValues
+    })
+  }, [dragIndex, min, max, step, onValueChange])
+
+  const handleMouseUp = useCallback(() => {
+    setDragIndex(-1)
+  }, [])
+
+  // Agregar event listeners globales para el arrastre
+  useEffect(() => {
+    if (dragIndex !== -1) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.userSelect = 'none' // Prevenir selección de texto
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.body.style.userSelect = ''
+      }
+    }
+  }, [dragIndex, handleMouseMove, handleMouseUp])
+
   const handleTrackClick = (e) => {
+    // Solo procesar clicks si no estamos arrastrando
+    if (dragIndex !== -1) return
+    
     const rect = e.currentTarget.getBoundingClientRect()
-    const clickPosition = (e.clientX - rect.left) / rect.width
-    const clickValue = Math.round(min + clickPosition * (max - min))
+    const clickValue = calculateValueFromPosition(e.clientX - rect.left, rect)
     
     const distanceToMin = Math.abs(clickValue - localValues[0])
     const distanceToMax = Math.abs(clickValue - localValues[1])
     
+    let newValues
     if (distanceToMin < distanceToMax) {
-      const newValues = [Math.min(clickValue, localValues[1] - 1), localValues[1]]
-      setLocalValues(newValues)
-      onValueChange(newValues)
+      newValues = [Math.max(min, Math.min(clickValue, localValues[1] - step)), localValues[1]]
     } else {
-      const newValues = [localValues[0], Math.max(clickValue, localValues[0] + 1)]
-      setLocalValues(newValues)
-      onValueChange(newValues)
+      newValues = [localValues[0], Math.min(max, Math.max(clickValue, localValues[0] + step))]
     }
+    
+    setLocalValues(newValues)
+    onValueChange(newValues)
   }
 
   return (
     <div className="relative h-8 mb-4">
       <div 
+        ref={sliderRef}
         className="absolute top-1/2 w-full h-2 bg-gray-600 rounded-full cursor-pointer transform -translate-y-1/2"
         onClick={handleTrackClick}
       >
@@ -113,13 +269,14 @@ const CustomSlider = ({ value, onValueChange, min, max, step }) => {
           }}
         />
       </div>
+      
+      {/* Handle izquierdo */}
       <div 
         className={`absolute top-1/2 w-6 h-6 bg-white border-3 border-rose-500 rounded-full cursor-grab transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 shadow-lg ${
           dragIndex === 0 ? 'scale-125 cursor-grabbing shadow-xl' : ''
         }`}
         style={{ left: `${calculatePosition(localValues[0])}%` }}
-        onMouseDown={() => handleMouseDown(0)}
-        onMouseUp={handleMouseUp}
+        onMouseDown={handleMouseDown(0)}
       >
         <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
           <div className="bg-gray-900 text-white px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap shadow-lg border border-gray-700">
@@ -128,22 +285,25 @@ const CustomSlider = ({ value, onValueChange, min, max, step }) => {
           </div>
         </div>
       </div>
+      
+      {/* Handle derecho */}
       <div 
         className={`absolute top-1/2 w-6 h-6 bg-white border-3 border-rose-500 rounded-full cursor-grab transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 shadow-lg ${
           dragIndex === 1 ? 'scale-125 cursor-grabbing shadow-xl' : ''
         }`}
         style={{ left: `${calculatePosition(localValues[1])}%` }}
-        onMouseDown={() => handleMouseDown(1)}
-        onMouseUp={handleMouseUp}
+        onMouseDown={handleMouseDown(1)}
       >
-        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
+        <div className="absolute -top-12 left-1/28 transform -translate-x-1/2">
           <div className="bg-gray-900 text-white px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap shadow-lg border border-gray-700">
             Hasta {localValues[1]} años
             <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
           </div>
         </div>
       </div>
-      <div className="absolute -bottom-6 left-0 text-xs text-gray-500">
+      
+      {/* Etiquetas de min/max */}
+      <div className="absolute -bottom-6 left-2 text-xs text-gray-500">
         {min}
       </div>
       <div className="absolute -bottom-6 right-0 text-xs text-gray-500">
@@ -166,7 +326,7 @@ export default function CompleteProfilePage() {
     photos: [],
     bio: "",
     minAgePreference: 18,
-    maxAgePreference: 100,
+    maxAgePreference: 70,
     internationalMode: false,
   })
 
@@ -386,6 +546,7 @@ export default function CompleteProfilePage() {
       try {
         const token = localStorage.getItem("authToken")
         const id = localStorage.getItem("userId")
+        console.log("hola q ase", id)
         await axios.put(
           `http://localhost:3000/users/profile/${id}`,
           {
@@ -725,41 +886,9 @@ export default function CompleteProfilePage() {
                     value={[formData.minAgePreference, formData.maxAgePreference]}
                     onValueChange={handleAgeRangeChange}
                     min={18}
-                    max={80}
+                    max={70}
                     step={1}
                   />
-                  <div className="mt-8 space-y-4">
-                    <div className="text-center">
-                      <div className="inline-flex items-center bg-gradient-to-r from-rose-600/30 to-pink-600/30 border border-rose-500/50 rounded-xl px-6 py-3">
-                        <span className="text-xl font-bold text-rose-300">
-                          {formData.minAgePreference} - {formData.maxAgePreference} años
-                        </span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-                        <div className="text-sm text-gray-400 mb-1">Edad mínima</div>
-                        <div className="text-2xl font-bold text-rose-300">{formData.minAgePreference}</div>
-                        <div className="text-xs text-gray-500">años</div>
-                      </div>
-                      <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-                        <div className="text-sm text-gray-400 mb-1">Edad máxima</div>
-                        <div className="text-2xl font-bold text-rose-300">{formData.maxAgePreference}</div>
-                        <div className="text-xs text-gray-500">años</div>
-                      </div>
-                    </div>
-                    <div className="bg-rose-600/20 border border-rose-500/50 rounded-lg p-4">
-                      <div className="text-sm text-rose-300">
-                        <span className="font-medium">Tu búsqueda incluye:</span> Personas entre {formData.minAgePreference} y {formData.maxAgePreference} años
-                        {formData.maxAgePreference - formData.minAgePreference <= 5 && (
-                          <span className="block mt-1 text-rose-400">💡 Rango estrecho - más específico</span>
-                        )}
-                        {formData.maxAgePreference - formData.minAgePreference > 15 && (
-                          <span className="block mt-1 text-rose-400">💡 Rango amplio - más opciones</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
                 </div>
                 <div className="text-sm text-gray-400 space-y-2">
                   <p>• Arrastra los círculos para ajustar el rango</p>
