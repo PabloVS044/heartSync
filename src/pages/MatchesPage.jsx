@@ -183,7 +183,7 @@ export default function MatchesPage() {
                       </div>
                       <div className="mt-2">
                         <span className="text-sm font-medium text-rose-400">
-                          {match.match?.matchPercentage || 0}% de coincidencia
+                          {match?.matchPercentage || 0}% de coincidencia
                         </span>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2">
