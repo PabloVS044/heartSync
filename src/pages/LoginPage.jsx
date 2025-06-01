@@ -268,14 +268,7 @@ export default function LoginPage() {
                   )}
                 />
                 </div>
-                <Button
-                  onClick={handleFacebookLogin}
-                  className="w-full bg-blue-600 hover:bg-blue-700 transition-colors"
-                  disabled={isLoading}
-                >
-                  <Facebook className="mr-2 h-4 w-4" />
-                  Continua con Facebook
-                </Button>
+
               </div>
 
               <div className="relative">

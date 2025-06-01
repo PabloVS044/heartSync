@@ -573,7 +573,7 @@ export default function EnhancedProfilePage() {
                 </div>
 
                 {/* Información del usuario */}
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 space-y-4 mt-8">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
@@ -640,23 +640,7 @@ export default function EnhancedProfilePage() {
                   </div>
 
                   {/* Estadísticas */}
-                  <div className="grid grid-cols-4 gap-4">
-                    {[
-                      { icon: Heart, value: statistics.likes, label: "Likes", color: "text-green-400" },
-                      { icon: Star, value: statistics.superlikes, label: "Superlikes", color: "text-yellow-400" },
-                      { icon: Sparkles, value: statistics.matches, label: "Matches", color: "text-rose-400" },
-                      { icon: Eye, value: "2.1k", label: "Vistas", color: "text-blue-400" },
-                    ].map((stat, index) => (
-                      <div
-                        key={index}
-                        className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 text-center border border-gray-700/50"
-                      >
-                        <stat.icon className={`h-5 w-5 mx-auto mb-2 ${stat.color}`} />
-                        <p className="text-xl font-bold">{stat.value}</p>
-                        <p className="text-xs text-gray-400">{stat.label}</p>
-                      </div>
-                    ))}
-                  </div>
+                 
                 </div>
               </div>
             </CardContent>

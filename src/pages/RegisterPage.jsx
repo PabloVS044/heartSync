@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   Heart,
@@ -28,15 +28,13 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { Switch } from "@/components/ui/switch"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import Swal from "sweetalert2"
 
-// Lista de países para el selector
 const COUNTRIES = [
   { code: "ES", name: "España" },
   { code: "MX", name: "México" },
@@ -51,9 +49,7 @@ const COUNTRIES = [
   { code: "CA", name: "Canadá" },
 ].sort((a, b) => a.name.localeCompare(b.name))
 
-// Lista de intereses disponibles
 const AVAILABLE_INTERESTS = [
-  // Arte y Cultura
   { id: "arte", name: "Arte" },
   { id: "museos", name: "Museos" },
   { id: "historia", name: "Historia" },
@@ -63,16 +59,12 @@ const AVAILABLE_INTERESTS = [
   { id: "poesía", name: "Poesía" },
   { id: "escritura", name: "Escritura" },
   { id: "filosofía", name: "Filosofía" },
-
-  // Música y Escena
   { id: "música", name: "Música" },
   { id: "conciertos", name: "Conciertos" },
   { id: "tocar_instrumento", name: "Tocar instrumento" },
   { id: "dj", name: "DJ" },
   { id: "karaoke", name: "Karaoke" },
   { id: "canto", name: "Canto" },
-
-  // Actividades físicas y aire libre
   { id: "deportes", name: "Deportes" },
   { id: "fútbol", name: "Fútbol" },
   { id: "baloncesto", name: "Baloncesto" },
@@ -90,8 +82,6 @@ const AVAILABLE_INTERESTS = [
   { id: "pilates", name: "Pilates" },
   { id: "crossfit", name: "Crossfit" },
   { id: "gimnasio", name: "Gimnasio" },
-
-  // Estilo de vida y bienestar
   { id: "meditación", name: "Meditación" },
   { id: "espiritualidad", name: "Espiritualidad" },
   { id: "alimentación_saludable", name: "Alimentación saludable" },
@@ -99,8 +89,6 @@ const AVAILABLE_INTERESTS = [
   { id: "veganismo", name: "Veganismo" },
   { id: "mascotas", name: "Mascotas" },
   { id: "voluntariado", name: "Voluntariado" },
-
-  // Tecnología y ciencia
   { id: "tecnología", name: "Tecnología" },
   { id: "videojuegos", name: "Videojuegos" },
   { id: "inteligencia_artificial", name: "Inteligencia Artificial" },
@@ -108,8 +96,6 @@ const AVAILABLE_INTERESTS = [
   { id: "astronomía", name: "Astronomía" },
   { id: "programación", name: "Programación" },
   { id: "gadgets", name: "Gadgets" },
-
-  // Entretenimiento y cultura pop
   { id: "anime", name: "Anime" },
   { id: "manga", name: "Manga" },
   { id: "series", name: "Series" },
@@ -117,8 +103,6 @@ const AVAILABLE_INTERESTS = [
   { id: "marvel", name: "Marvel" },
   { id: "starwars", name: "Star Wars" },
   { id: "cosplay", name: "Cosplay" },
-
-  // Hobbies y creativos
   { id: "fotografía", name: "Fotografía" },
   { id: "pintura", name: "Pintura" },
   { id: "manualidades", name: "Manualidades" },
@@ -131,33 +115,25 @@ const AVAILABLE_INTERESTS = [
   { id: "repostería", name: "Repostería" },
   { id: "jardinería", name: "Jardinería" },
   { id: "coleccionismo", name: "Coleccionismo" },
-
-  // Gastronomía y bebidas
   { id: "gastronomía", name: "Gastronomía" },
   { id: "vino", name: "Vino" },
   { id: "cerveza_artesanal", name: "Cerveza artesanal" },
   { id: "café", name: "Café" },
   { id: "cocteles", name: "Cócteles" },
   { id: "brunch", name: "Brunch" },
-
-  // Viajes y cultura global
   { id: "viajar", name: "Viajar" },
   { id: "mochilero", name: "Mochilero" },
   { id: "idiomas", name: "Idiomas" },
-  { id: "culturas", name: "Culturas del mundo" },
+  { id: "culturas", name: "Culturas del mundolattes" },
   { id: "playa", name: "Playa" },
   { id: "montaña", name: "Montaña" },
   { id: "roadtrips", name: "Roadtrips" },
   { id: "aventura", name: "Aventura" },
-
-  // Juegos de mesa y lógica
   { id: "ajedrez", name: "Ajedrez" },
   { id: "juegos_de_mesa", name: "Juegos de mesa" },
   { id: "póker", name: "Póker" },
   { id: "escape_rooms", name: "Escape rooms" },
   { id: "trivia", name: "Trivia" },
-
-  // Otros
   { id: "autos", name: "Autos" },
   { id: "modificación_vehículos", name: "Modificación de vehículos" },
   { id: "motocicletas", name: "Motocicletas" },
@@ -167,6 +143,146 @@ const AVAILABLE_INTERESTS = [
   { id: "redes_sociales", name: "Redes sociales" },
 ];
 
+const CustomSlider = ({ value, onValueChange, min, max, step = 1 }) => {
+  const [localValues, setLocalValues] = useState(value)
+  const [dragIndex, setDragIndex] = useState(-1)
+  const sliderRef = useRef(null)
+
+  useEffect(() => {
+    setLocalValues(value)
+  }, [value])
+
+  const calculatePosition = (val) => {
+    return ((val - min) / (max - min)) * 100
+  }
+
+  const calculateValueFromPosition = (position, rect) => {
+    const percentage = Math.max(0, Math.min(1, position / rect.width))
+    const rawValue = min + percentage * (max - min)
+    return Math.round(rawValue / step) * step
+  }
+
+  const handleMouseDown = (index) => (e) => {
+    e.preventDefault()
+    setDragIndex(index)
+  }
+
+  const handleMouseMove = useCallback((e) => {
+    if (dragIndex === -1 || !sliderRef.current) return
+
+    const rect = sliderRef.current.getBoundingClientRect()
+    const newValue = calculateValueFromPosition(e.clientX - rect.left, rect)
+    
+    setLocalValues(prev => {
+      let newValues = [...prev]
+      
+      if (dragIndex === 0) {
+        newValues[0] = Math.max(min, Math.min(newValue, newValues[1] - step))
+      } else {
+        newValues[1] = Math.min(max, Math.max(newValue, newValues[0] + step))
+      }
+      
+      if (newValues[0] !== prev[0] || newValues[1] !== prev[1]) {
+        onValueChange(newValues)
+      }
+      
+      return newValues
+    })
+  }, [dragIndex, min, max, step, onValueChange])
+
+  const handleMouseUp = useCallback(() => {
+    setDragIndex(-1)
+  }, [])
+
+  useEffect(() => {
+    if (dragIndex !== -1) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.userSelect = 'none'
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.body.style.userSelect = ''
+      }
+    }
+  }, [dragIndex, handleMouseMove, handleMouseUp])
+
+  const handleTrackClick = (e) => {
+    if (dragIndex !== -1) return
+    
+    const rect = e.currentTarget.getBoundingClientRect()
+    const clickValue = calculateValueFromPosition(e.clientX - rect.left, rect)
+    
+    const distanceToMin = Math.abs(clickValue - localValues[0])
+    const distanceToMax = Math.abs(clickValue - localValues[1])
+    
+    let newValues
+    if (distanceToMin < distanceToMax) {
+      newValues = [Math.max(min, Math.min(clickValue, localValues[1] - step)), localValues[1]]
+    } else {
+      newValues = [localValues[0], Math.min(max, Math.max(clickValue, localValues[0] + step))]
+    }
+    
+    setLocalValues(newValues)
+    onValueChange(newValues)
+  }
+
+  return (
+    <div className="relative h-8 mb-4">
+      <div 
+        ref={sliderRef}
+        className="absolute top-1/2 w-full h-2 bg-gray-600 rounded-full cursor-pointer transform -translate-y-1/2"
+        onClick={handleTrackClick}
+      >
+        <div 
+          className="absolute h-full bg-gradient-to-r from-rose-500 to-pink-500 rounded-full transition-all duration-200"
+          style={{
+            left: `${calculatePosition(localValues[0])}%`,
+            width: `${calculatePosition(localValues[1]) - calculatePosition(localValues[0])}%`
+          }}
+        />
+      </div>
+      
+      <div 
+        className={`absolute top-1/2 w-6 h-6 bg-white border-3 border-rose-500 rounded-full cursor-grab transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 shadow-lg ${
+          dragIndex === 0 ? 'scale-125 cursor-grabbing shadow-xl' : ''
+        }`}
+        style={{ left: `${calculatePosition(localValues[0])}%` }}
+        onMouseDown={handleMouseDown(0)}
+      >
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
+          <div className="bg-gray-900 text-white px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap shadow-lg border border-gray-700">
+            Desde {localValues[0]} años
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div 
+        className={`absolute top-1/2 w-6 h-6 bg-white border-3 border-rose-500 rounded-full cursor-grab transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 shadow-lg ${
+          dragIndex === 1 ? 'scale-125 cursor-grabbing shadow-xl' : ''
+        }`}
+        style={{ left: `${calculatePosition(localValues[1])}%` }}
+        onMouseDown={handleMouseDown(1)}
+      >
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
+          <div className="bg-gray-900 text-white px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap shadow-lg border border-gray-700">
+            Hasta {localValues[1]} años
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="absolute -bottom-6 left-0 text-xs text-gray-500">
+        {min}
+      </div>
+      <div className="absolute -bottom-6 right-0 text-xs text-gray-500">
+        {max}
+      </div>
+    </div>
+  )
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -185,7 +301,7 @@ export default function RegisterPage() {
     photos: [],
     bio: "",
     minAgePreference: 18,
-    maxAgePreference: 40,
+    maxAgePreference: 29,
     internationalMode: false,
   })
 
@@ -201,8 +317,39 @@ export default function RegisterPage() {
     { id: "personal", title: "Personal", icon: <User className="h-4 w-4" /> },
     { id: "photos", title: "Fotos", icon: <Camera className="h-4 w-4" /> },
     { id: "interests", title: "Intereses", icon: <Heart className="h-4 w-4" /> },
-    { id: "preferences", title: "Preferencias", icon: <ChevronDown className="h-4 w-4" /> },
   ]
+
+  const getSliderLimits = () => {
+    if (formData.gender === "male") {
+      return { min: 30, max: 70 }
+    } else if (formData.gender === "female") {
+      return { min: 18, max: 29 }
+    } else {
+      return { min: 18, max: 70 }
+    }
+  }
+
+  useEffect(() => {
+    const { min, max } = getSliderLimits()
+    setFormData((prev) => {
+      let newMinAge = prev.minAgePreference
+      let newMaxAge = prev.maxAgePreference
+
+      if (prev.gender === "male") {
+        newMinAge = Math.max(30, prev.minAgePreference)
+        newMaxAge = Math.min(70, Math.max(newMinAge + 1, prev.maxAgePreference))
+      } else if (prev.gender === "female") {
+        newMinAge = Math.max(18, prev.minAgePreference)
+        newMaxAge = Math.min(29, Math.max(newMinAge + 1, prev.maxAgePreference))
+      }
+
+      return {
+        ...prev,
+        minAgePreference: newMinAge,
+        maxAgePreference: newMaxAge,
+      }
+    })
+  }, [formData.gender])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -213,7 +360,12 @@ export default function RegisterPage() {
   }
 
   const handleSelectChange = (name, value) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (name === "country") {
+      const selectedCountry = COUNTRIES.find((country) => country.code === value)
+      setFormData((prev) => ({ ...prev, [name]: selectedCountry ? selectedCountry.name : "" }))
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    }
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }
@@ -264,7 +416,7 @@ export default function RegisterPage() {
         {
           method: "POST",
           body: formData,
-        },
+        }
       )
       const data = await response.json()
       if (data.secure_url) {
@@ -362,7 +514,6 @@ export default function RegisterPage() {
     const newErrors = {}
 
     if (currentStep === 0) {
-      // Validación para información personal
       if (!formData.name.trim()) newErrors.name = "El nombre es obligatorio"
       if (!formData.surname.trim()) newErrors.surname = "El apellido es obligatorio"
 
@@ -395,12 +546,10 @@ export default function RegisterPage() {
         newErrors.gender = "Selecciona tu género"
       }
     } else if (currentStep === 1) {
-      // Validación para fotos
       if (formData.photos.length === 0) {
         newErrors.photos = "Sube al menos una foto"
       }
     } else if (currentStep === 2) {
-      // Validación para intereses y bio
       if (formData.interests.length === 0) {
         newErrors.interests = "Selecciona al menos un interés"
       }
@@ -411,9 +560,9 @@ export default function RegisterPage() {
         newErrors.bio = "La biografía debe tener al menos 10 caracteres"
       }
     } else if (currentStep === 3) {
-      // Validación para preferencias
-      if (formData.minAgePreference < 18 || formData.maxAgePreference > 70) {
-        newErrors.agePreference = "El rango de edad debe estar entre 18 y 70 años"
+      const { min, max } = getSliderLimits()
+      if (formData.minAgePreference < min || formData.maxAgePreference > max) {
+        newErrors.agePreference = `El rango de edad debe estar entre ${min} y ${max} años`
       }
       if (formData.minAgePreference >= formData.maxAgePreference) {
         newErrors.agePreference = "La edad mínima debe ser menor que la máxima"
@@ -427,7 +576,6 @@ export default function RegisterPage() {
   const validateForm = () => {
     const newErrors = {}
 
-    // Personal Information Validation
     if (!formData.name.trim()) newErrors.name = "El nombre es obligatorio"
     if (!formData.surname.trim()) newErrors.surname = "El apellido es obligatorio"
 
@@ -460,12 +608,10 @@ export default function RegisterPage() {
       newErrors.gender = "Selecciona tu género"
     }
 
-    // Photos Validation
     if (formData.photos.length === 0) {
       newErrors.photos = "Sube al menos una foto"
     }
 
-    // Interests and Bio Validation
     if (formData.interests.length === 0) {
       newErrors.interests = "Selecciona al menos un interés"
     }
@@ -476,9 +622,9 @@ export default function RegisterPage() {
       newErrors.bio = "La biografía debe tener al menos 10 caracteres"
     }
 
-    // Preferences Validation
-    if (formData.minAgePreference < 18 || formData.maxAgePreference > 70) {
-      newErrors.agePreference = "El rango de edad debe estar entre 18 y 70 años"
+    const { min, max } = getSliderLimits()
+    if (formData.minAgePreference < min || formData.maxAgePreference > max) {
+      newErrors.agePreference = `El rango de edad debe estar entre ${min} y ${max} años`
     }
     if (formData.minAgePreference >= formData.maxAgePreference) {
       newErrors.agePreference = "La edad mínima debe ser menor que la máxima"
@@ -501,13 +647,11 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // If not on the last step, just go to the next step
     if (currentStep < steps.length - 1) {
       handleNextStep()
       return
     }
 
-    // On the last step, validate the entire form and submit
     if (validateForm()) {
       setIsSubmitting(true)
 
@@ -782,7 +926,10 @@ export default function RegisterPage() {
                       hasError("country") ? "text-red-400" : "text-gray-400"
                     }`}
                   />
-                  <Select value={formData.country} onValueChange={(value) => handleSelectChange("country", value)}>
+                  <Select
+                    value={COUNTRIES.find((c) => c.name === formData.country)?.code || ""}
+                    onValueChange={(value) => handleSelectChange("country", value)}
+                  >
                     <SelectTrigger
                       className={`bg-gray-800/50 border-gray-700 text-white pl-10 ${
                         hasError("country") ? "border-red-400 focus:ring-red-400" : ""
@@ -870,9 +1017,7 @@ export default function RegisterPage() {
                         className={`w-12 h-12 rounded-md overflow-hidden cursor-pointer border-2 ${
                           index === 0 ? "border-rose-500" : "border-transparent"
                         }`}
-                        onClick={() => {
-                          // Lógica para cambiar la foto principal (opcional)
-                        }}
+                        onClick={() => {}}
                       >
                         <img
                           src={photo || "/placeholder.svg"}
@@ -1017,7 +1162,7 @@ export default function RegisterPage() {
                 </div>
               </div>
             </div>
-                      <div className="space-y-6">
+
             <div className="space-y-6">
               <div className="space-y-4">
                 <Label className="text-lg font-medium flex items-center">
@@ -1025,30 +1170,13 @@ export default function RegisterPage() {
                   Rango de edad que buscas
                 </Label>
                 <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
-                  <Slider
-                    defaultValue={[formData.minAgePreference, formData.maxAgePreference]}
-                    min={18}
-                    max={70}
-                    step={1}
+                  <CustomSlider
                     value={[formData.minAgePreference, formData.maxAgePreference]}
                     onValueChange={handleAgeRangeChange}
-                    className="mb-6"
-                    style={{
-                      "--slider-track-bg": "#4B5563",
-                      "--slider-range-bg": "#F43F5E",
-                      "--slider-thumb-bg": "#F43F5E",
-                      "--slider-thumb-border": "2px solid #FFFFFF",
-                    }}
+                    min={getSliderLimits().min}
+                    max={getSliderLimits().max}
+                    step={1}
                   />
-                  <div className="flex justify-between items-center">
-                    <div className="bg-rose-600/20 border border-rose-500/50 rounded-lg px-3 py-1.5">
-                      <span className="text-rose-300 font-medium">{formData.minAgePreference} años</span>
-                    </div>
-                    <span className="text-gray-400">a</span>
-                    <div className="bg-rose-600/20 border border-rose-500/50 rounded-lg px-3 py-1.5">
-                      <span className="text-rose-300 font-medium">{formData.maxAgePreference} años</span>
-                    </div>
-                  </div>
                 </div>
                 <p className="text-sm text-gray-400">
                   Selecciona el rango de edad para tus posibles coincidencias.
@@ -1088,8 +1216,6 @@ export default function RegisterPage() {
                 )}
               </div>
             </div>
-          </div>
-
           </div>
         )
       default:
@@ -1206,34 +1332,6 @@ export default function RegisterPage() {
         
         .swal2-icon {
           border-color: #f43f5e !important;
-        }
-
-        /* Custom slider styles */
-        .slider {
-          --slider-track-bg: #4B5563;
-          --slider-range-bg: #F43F5E;
-          --slider-thumb-bg: #F43F5E;
-          --slider-thumb-border: 2px solid #FFFFFF;
-        }
-
-        .slider [role="slider"] {
-          background: var(--slider-thumb-bg);
-          border: var(--slider-thumb-border);
-          width: 16px;
-          height: 16px;
-          transition: all 0.2s ease;
-        }
-
-        .slider [role="slider"]:hover {
-          transform: scale(1.2);
-        }
-
-        .slider .bg-primary {
-          background: var(--slider-range-bg) !important;
-        }
-
-        .slider .bg-muted {
-          background: var(--slider-track-bg) !important;
         }
       `}</style>
     </div>
