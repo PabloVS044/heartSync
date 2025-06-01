@@ -67,24 +67,24 @@ useEffect(() => {
       }
 
       // Fetch current user
-      console.log(`Fetching current user: http://localhost:3000/api/users/miPerfil/${currentUserId}`);
-      const currentUserResponse = await axios.get(`http://localhost:3000/users/miPerfil/${currentUserId}`, {
+      console.log(`Fetching current user: http://localhost:3000/api/users/miPerfil/${id}`);
+      const currentUserResponse = await axios.get(`http://localhost:3000/users/miPerfil/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Current user response:", currentUserResponse.data);
       setCurrentUser(currentUserResponse.data);
 
       // Fetch profile user
-      console.log(`Fetching profile: http://localhost:3000/users/${currentUserId}`);
-      const profileResponse = await axios.get(`http://localhost:3000/users/${currentUserId}`, {
+      console.log(`Fetching profile: http://localhost:3000/users/${id}`);
+      const profileResponse = await axios.get(`http://localhost:3000/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Profile response:", profileResponse.data);
       setProfileData({ ...profileResponse.data, matchStatus: "none", conversationStarted: false });
 
       // Fetch matches
-      console.log(`Fetching matches: http://localhost:3000/users/${currentUserId}/matches`);
-      const matchesResponse = await axios.get(`http://localhost:3000/users/${currentUserId}/matches`, {
+      console.log(`Fetching matches: http://localhost:3000/users/${id}/matches`);
+      const matchesResponse = await axios.get(`http://localhost:3000/users/${id}/matches`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Matches response:", matchesResponse.data);
@@ -508,47 +508,21 @@ useEffect(() => {
                 </div>
               </CardContent>
             </Card>
-            {profileData.matchStatus !== "matched" && (
-              <div className="flex justify-center mt-6 gap-4">
-                <motion.button
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-xl transition-all duration-200"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleSuperlike}
-                  aria-label="Super Like"
-                >
-                  <Star className="h-6 w-6" />
-                </motion.button>
-                <motion.button
-                  className="bg-rose-600 hover:bg-rose-700 text-white rounded-full p-4 shadow-xl transition-all duration-200"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleLike}
-                  aria-label="Like"
-                >
-                  <Heart className="h-6 w-6" />
-                </motion.button>
-              </div>
-            )}
+            
           </div>
 
           {/* Right Column - Tabs */}
           <div className="lg:col-span-1">
             <Card className="border-gray-800 bg-gray-900/50 rounded-xl shadow-lg">
               <Tabs defaultValue="photos" className="w-full">
-                <TabsList className="grid grid-cols-2 bg-gray-800/50 rounded-t-lg">
+                <TabsList className="grid grid-cols-1 bg-gray-800/50 rounded-t-lg">
                   <TabsTrigger
                     value="photos"
                     className="text-sm font-medium text-gray-400 data-[state=active]:bg-rose-600 data-[state=active]:text-white"
                   >
                     Fotos
                   </TabsTrigger>
-                  <TabsTrigger
-                    value="compatibility"
-                    className="text-sm font-medium text-gray-400 data-[state=active]:bg-rose-600 data-[state=active]:text-white"
-                  >
-                    Compatibilidad
-                  </TabsTrigger>
+
                 </TabsList>
                 <TabsContent value="photos" className="p-4">
                   <div className="grid grid-cols-2 gap-2">

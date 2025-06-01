@@ -390,12 +390,6 @@ export default function Navbar() {
                     <User className="mr-2 h-4 w-4" />
                     <span>Ver mi perfil</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer hover:bg-gray-800 focus:bg-gray-800 px-3 py-2"
-                    onClick={() => handleNavigation("/editar-perfil")}
-                  >
-                    <span>Editar perfil</span>
-                  </DropdownMenuItem>
                 </div>
 
                 <DropdownMenuSeparator className="bg-gray-800" />
