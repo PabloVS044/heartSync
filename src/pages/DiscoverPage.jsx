@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Heart, X, Info, ExternalLink, MapPin, Sparkles, ChevronLeft, ChevronRight } from "lucide-react"
+import { Heart, X, Info, ExternalLink, MapPin, Sparkles, ChevronLeft, ChevronRight, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -129,7 +129,6 @@ const AVAILABLE_INTERESTS = [
   { id: "redes_sociales", name: "Redes sociales" },
 ];
 
-
 export default function DiscoverPage() {
   const [matches, setMatches] = useState([])
   const [ads, setAds] = useState([])
@@ -145,11 +144,21 @@ export default function DiscoverPage() {
   const [matchAnimation, setMatchAnimation] = useState(false)
   const [matchData, setMatchData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [partyMode, setPartyMode] = useState(false)
   const { toast } = useToast()
   const navigate = useNavigate()
 
   const userId = localStorage.getItem("userId")
   const currentMatch = matches[currentMatchIndex]
+
+  const togglePartyMode = () => {
+    setPartyMode(!partyMode)
+  }
+
+  const addRandomInterest = (interests) => {
+    const randomInterest = AVAILABLE_INTERESTS[Math.floor(Math.random() * AVAILABLE_INTERESTS.length)]
+    return [...interests, randomInterest.name]
+  }
 
   // Fetch matches and personalized ads on component mount
   useEffect(() => {
@@ -180,7 +189,7 @@ export default function DiscoverPage() {
           distance: "Desconocido",
           compatibility: Math.round(match.matchPercentage * 100) / 100,
           images: match.photos.length > 0 ? match.photos : ["/placeholder.svg?height=500&width=400"],
-          interests: match.interests.map((id) => AVAILABLE_INTERESTS.find((i) => i.id === id)?.name || id),
+          interests: addRandomInterest(match.interests.map((id) => AVAILABLE_INTERESTS.find((i) => i.id === id)?.name || id)),
           commonInterests: match.interests.map((id) => AVAILABLE_INTERESTS.find((i) => i.id === id)?.name || id),
           commonAttributes: {
             country: match.country,
@@ -226,15 +235,13 @@ export default function DiscoverPage() {
     fetchData()
   }, [navigate, toast, userId])
 
-  // Modificar la función nextMatch para que maneje correctamente el caso de no tener más usuarios
   const nextMatch = () => {
     setCurrentImageIndex(0)
     setDirection(null)
     if (currentMatchIndex + 1 < matches.length) {
       setCurrentMatchIndex((prev) => prev + 1)
     } else {
-      // No hay más usuarios para mostrar
-      setCurrentMatchIndex(-1) // Usamos -1 para indicar que no hay más usuarios
+      setCurrentMatchIndex(-1)
     }
   }
 
@@ -250,11 +257,19 @@ export default function DiscoverPage() {
     }
   }
 
-  // Modificar handleLike para que la tarjeta se deslice antes de cambiar al siguiente usuario
   const handleLike = async () => {
     if (!currentMatch) return
     setLikeAnimation(true)
     setDirection("right")
+    if (partyMode) {
+      import("canvas-confetti").then((confetti) => {
+        confetti.default({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        })
+      })
+    }
     try {
       const token = localStorage.getItem("authToken")
       const response = await axios.post(
@@ -264,13 +279,10 @@ export default function DiscoverPage() {
       )
 
       if (response.data.isMatched) {
-        // Configurar datos del match para la animación
         setMatchData({
           user1Name: "Tú",
           user2Name: currentMatch.name,
         })
-
-        // Esperar a que termine la animación de like antes de mostrar el match
         setTimeout(() => {
           setLikeAnimation(false)
           setMatchAnimation(true)
@@ -281,8 +293,6 @@ export default function DiscoverPage() {
           description: `Has dado like a ${currentMatch.name}`,
           variant: "default",
         })
-
-        // Esperar a que termine la animación de swipe antes de mostrar el siguiente usuario
         setTimeout(() => {
           setLikeAnimation(false)
           nextMatch()
@@ -303,7 +313,41 @@ export default function DiscoverPage() {
     }
   }
 
-  // Modificar handleDislike para que la tarjeta se deslice antes de cambiar al siguiente usuario
+  const handleSuperLike = async () => {
+    if (!currentMatch) return
+    setLikeAnimation(true)
+    setDirection("up")
+    try {
+      const token = localStorage.getItem("authToken")
+      await axios.post(
+        `https://heartsync-backend-xoba.onrender.com/users/${userId}/superlike/${currentMatch.id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      toast({
+        title: "¡Super Like enviado! 🌟",
+        description: `Has enviado un Super Like a ${currentMatch.name}`,
+        variant: "default",
+      })
+      setTimeout(() => {
+        setLikeAnimation(false)
+        nextMatch()
+      }, 500)
+    } catch (error) {
+      console.error("Error superliking user:", error.response?.data || error.message)
+      toast({
+        title: "Error",
+        description: "No se pudo enviar el Super Like. Inténtalo de nuevo.",
+        variant: "destructive",
+      })
+      setLikeAnimation(false)
+      setDirection(null)
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        navigate("/login")
+      }
+    }
+  }
+
   const handleDislike = async () => {
     if (!currentMatch) return
     setDislikeAnimation(true)
@@ -318,8 +362,6 @@ export default function DiscoverPage() {
       toast({
         description: `Has pasado de ${currentMatch.name}`,
       })
-
-      // Esperar a que termine la animación de swipe antes de mostrar el siguiente usuario
       setTimeout(() => {
         setDislikeAnimation(false)
         nextMatch()
@@ -350,7 +392,6 @@ export default function DiscoverPage() {
     setAdModalOpen(true)
   }
 
-  // Render ads independently of matches
   const renderAd = (ad, side) => {
     if (!ad) return null
     return (
@@ -376,13 +417,15 @@ export default function DiscoverPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <Navbar />
+      <Button
+        onClick={togglePartyMode}
+        className="fixed top-20 right-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full z-50"
+      >
+        {partyMode ? "Desactivar Modo Fiesta 🎉" : "Activar Modo Fiesta 🎉"}
+      </Button>
       <div className="container mx-auto px-4 py-20 flex flex-col md:flex-row items-center gap-6">
-        {/* Left Ad */}
         {renderAd(leftAd, "left")}
-
-        {/* Main Content */}
         <div className="flex-1 max-w-2xl mx-auto">
-          {/* Modificar la parte del renderizado para manejar correctamente el caso de currentMatchIndex = -1 */}
           {isLoading ? (
             <Loader />
           ) : currentMatchIndex === -1 || !currentMatch ? (
@@ -395,8 +438,8 @@ export default function DiscoverPage() {
             <div className="relative">
               <Card
                 className={`bg-gray-900/50 border-gray-800 transition-all duration-500 ${
-                  direction === "left" ? "card-swipe-left" : direction === "right" ? "card-swipe-right" : ""
-                }`}
+                  direction === "left" ? "card-swipe-left" : direction === "right" ? "card-swipe-right" : direction === "up" ? "card-swipe-up" : ""
+                } ${partyMode ? "animate-gradient-bg" : ""}`}
               >
                 <CardContent className="p-0">
                   <div className="relative">
@@ -438,15 +481,43 @@ export default function DiscoverPage() {
                         Compatibilidad: {currentMatch.compatibility}%
                       </div>
                     </div>
-
-                    {/* Animaciones de interacción */}
                     <LikeAnimation visible={likeAnimation} />
                     <DislikeAnimation visible={dislikeAnimation} />
                   </div>
-
                   <div className="p-4">
                     <p className="text-sm mb-4">{currentMatch.bio}</p>
-
+                    <div className="mb-4">
+                      <h3 className="text-sm font-semibold mb-2">Compatibilidad</h3>
+                      <canvas id="compatibility-chart" width="100" height="100"></canvas>
+                      ```chartjs
+                      {
+                        "type": "doughnut",
+                        "data": {
+                          "labels": ["Compatibilidad", "Resto"],
+                          "datasets": [{
+                            "data": [${currentMatch?.compatibility || 0}, ${100 - (currentMatch?.compatibility || 0)}],
+                            "backgroundColor": ["#f43f5e", "#4b5563"],
+                            "borderColor": ["#1f2937", "#1f2937"],
+                            "borderWidth": 1
+                          }]
+                        },
+                        "options": {
+                          "cutout": "70%",
+                          "plugins": {
+                            "legend": { "display": false },
+                            "tooltip": { "enabled": false },
+                            "title": {
+                              "display": true,
+                              "text": "${currentMatch?.compatibility || 0}%",
+                              "position": "center",
+                              "color": "#ffffff",
+                              "font": { "size": 20 }
+                            }
+                          }
+                        }
+                      }
+                      ```
+                    </div>
                     <div className="mb-4">
                       <h3 className="text-sm font-semibold mb-2">Intereses</h3>
                       <div className="flex flex-wrap gap-2">
@@ -457,7 +528,6 @@ export default function DiscoverPage() {
                         ))}
                       </div>
                     </div>
-
                     <div className="mb-4">
                       <h3 className="text-sm font-semibold mb-2">Otras coincidencias</h3>
                       <div className="grid grid-cols-2 gap-2">
@@ -471,7 +541,6 @@ export default function DiscoverPage() {
                         ))}
                       </div>
                     </div>
-
                     <div className="flex justify-center gap-6">
                       <Button
                         variant="outline"
@@ -487,13 +556,24 @@ export default function DiscoverPage() {
                       <Button
                         variant="outline"
                         size="icon"
+                        className={`w-16 h-16 rounded-full border-2 border-yellow-500 hover:bg-yellow-500/10 transition-all duration-200 ${
+                          likeAnimation && direction === "up" ? "scale-110 bg-yellow-500/20" : ""
+                        }`}
+                        onClick={handleSuperLike}
+                        disabled={likeAnimation || dislikeAnimation}
+                      >
+                        <Star className={`h-8 w-8 text-yellow-500 ${likeAnimation && direction === "up" ? "animate-pulse" : ""}`} fill="currentColor" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
                         className={`w-16 h-16 rounded-full border-2 border-green-500 hover:bg-green-500/10 transition-all duration-200 ${
-                          likeAnimation ? "scale-110 bg-green-500/20" : ""
+                          likeAnimation && direction === "right" ? "scale-110 bg-green-500/20" : ""
                         }`}
                         onClick={handleLike}
                         disabled={likeAnimation || dislikeAnimation}
                       >
-                        <Heart className={`h-8 w-8 text-green-500 ${likeAnimation ? "animate-pulse" : ""}`} />
+                        <Heart className={`h-8 w-8 text-green-500 ${likeAnimation && direction === "right" ? "animate-pulse" : ""}`} />
                       </Button>
                       <Button
                         variant="outline"
@@ -510,20 +590,14 @@ export default function DiscoverPage() {
             </div>
           )}
         </div>
-
-        {/* Right Ad */}
         {renderAd(rightAd, "right")}
       </div>
-
-      {/* Match Animation */}
       <MatchAnimation
         visible={matchAnimation}
         user1Name={matchData?.user1Name}
         user2Name={matchData?.user2Name}
         onComplete={handleMatchComplete}
       />
-
-      {/* Ad Modal */}
       <Dialog open={adModalOpen} onOpenChange={setAdModalOpen}>
         <DialogContent className="bg-gray-900 text-white border-gray-800">
           <DialogHeader>
@@ -557,6 +631,20 @@ export default function DiscoverPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <style jsx global>{`
+        @keyframes gradient-bg {
+          0% { background: linear-gradient(45deg, #ff6b6b, #4ecdc4); }
+          50% { background: linear-gradient(45deg, #4ecdc4, #ff6b6b); }
+          100% { background: linear-gradient(45deg, #ff6b6b, #4ecdc4); }
+        }
+        .animate-gradient-bg {
+          animation: gradient-bg 5s ease infinite;
+        }
+        .card-swipe-up {
+          transform: translateY(-100%) rotate(5deg);
+          opacity: 0;
+        }
+      `}</style>
     </div>
   )
 }
