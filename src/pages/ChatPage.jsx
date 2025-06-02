@@ -1,24 +1,19 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Send,
-  Paperclip,
   ImageIcon,
   Smile,
   ChevronLeft,
-  MoreVertical,
   Phone,
   Video,
   Info,
   Search,
-  Heart,
   Check,
   CheckCheck,
   User,
-  Calendar,
-  MapPin,
   X,
   MessageSquare,
 } from "lucide-react";
@@ -36,6 +31,7 @@ import Navbar from "@/components/navbar";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Loader } from "@/components/loader";
+
 // Emojis para el selector
 const EMOJIS = [
   "😊", "😍", "😘", "🥰", "😂", "😎", "👋", "❤️", "🎉", "🔥",
@@ -53,14 +49,19 @@ export default function MessagesPage() {
   const [showProfileInfo, setShowProfileInfo] = useState(false);
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTyping, setIsTyping] = useState(false); // Nueva funcionalidad: indicador de escritura
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   const userId = localStorage.getItem("userId") || "default_user_id";
 
-  const filteredMatches = matches.filter((match) =>
-    match.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Memoizar la búsqueda de coincidencias filtradas
+  const filteredMatches = useCallback(() => {
+    return matches.filter((match) =>
+      match.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [matches, searchTerm])();
 
   const activeMatch = matches.find((match) => match.id === activeMatchId);
   const activeConversation = activeMatchId ? conversations[activeMatchId] || [] : [];
@@ -143,9 +144,6 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (activeMatchId) {
-      const activeMatch = matches.find((match) => match.id === activeMatchId);
-      if (!activeMatch?.chatId) return;
-
       setConversations((prev) => {
         const updatedConversation = (prev[activeMatchId] || []).map((msg) => ({
           ...msg,
@@ -162,7 +160,7 @@ export default function MessagesPage() {
         )
       );
     }
-  }, [activeMatchId, matches, userId]);
+  }, [activeMatchId]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !activeMatchId) return;
@@ -210,6 +208,19 @@ export default function MessagesPage() {
       console.error("Error sending message:", error);
       toast.error("Error al enviar el mensaje.");
     }
+  };
+
+  const handleTyping = (e) => {
+    setMessage(e.target.value);
+    setIsTyping(true);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+    }, 2000);
   };
 
   const handleAddEmoji = (emoji) => {
@@ -544,7 +555,7 @@ export default function MessagesPage() {
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-800">
-                          <MoreVertical className="h-5 w-5" />
+                          <User className="h-5 w-5" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-56 bg-gray-900 border-gray-800 text-white p-0">
@@ -556,10 +567,6 @@ export default function MessagesPage() {
                           >
                             <User className="h-4 w-4 mr-2" />
                             Ver perfil
-                          </Button>
-                          <Button variant="ghost" className="w-full justify-start text-left hover:bg-gray-800">
-                            <Heart className="h-4 w-4 mr-2" />
-                            Añadir a favoritos
                           </Button>
                           <Button
                             variant="ghost"
@@ -585,59 +592,83 @@ export default function MessagesPage() {
                     </div>
                   )}
                   {activeConversation.length > 0 ? (
-                    activeConversation.map((msg, index) => {
-                      const isUser = msg.senderId === userId;
-                      const showAvatar =
-                        !isUser && (index === 0 || activeConversation[index - 1].senderId !== msg.senderId);
+                    <>
+                      {activeConversation.map((msg, index) => {
+                        const isUser = msg.senderId === userId;
+                        const showAvatar =
+                          !isUser && (index === 0 || activeConversation[index - 1].senderId !== msg.senderId);
 
-                      return (
-                        <div key={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-                          {!isUser && showAvatar && (
-                            <Avatar className="h-8 w-8 mr-2 mt-1">
-                              <AvatarImage src={activeMatch.image} alt={activeMatch.name} />
-                              <AvatarFallback>{activeMatch.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                          )}
-                          {!isUser && !showAvatar && <div className="w-10" />}
-                          <div className={`max-w-[70%] ${isUser ? "order-1" : "order-2"}`}>
-                            <div
-                              className={`rounded-2xl px-4 py-2 inline-block ${
-                                isUser ? "bg-rose-600 text-white rounded-br-none" : "bg-gray-800 text-white rounded-bl-none"
-                              }`}
-                            >
-                              {msg.image ? (
-                                <div className="space-y-2">
-                                  <img src={msg.image} alt="Imagen compartida" className="rounded-lg max-w-full h-auto" />
-                                  {msg.content && <p>{msg.content}</p>}
-                                </div>
-                              ) : (
-                                <p>{msg.content}</p>
-                              )}
+                        return (
+                          <motion.div
+                            key={msg.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                          >
+                            {!isUser && showAvatar && (
+                              <Avatar className="h-8 w-8 mr-2 mt-1">
+                                <AvatarImage src={activeMatch.image} alt={activeMatch.name} />
+                                <AvatarFallback>{activeMatch.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                            )}
+                            {!isUser && !showAvatar && <div className="w-10" />}
+                            <div className={`max-w-[70%] ${isUser ? "order-1" : "order-2"}`}>
+                              <div
+                                className={`rounded-2xl px-4 py-2 inline-block ${
+                                  isUser ? "bg-rose-600 text-white rounded-br-none" : "bg-gray-800 text-white rounded-bl-none"
+                                }`}
+                              >
+                                {msg.image ? (
+                                  <div className="space-y-2">
+                                    <img src={msg.image} alt="Imagen compartida" className="rounded-lg max-w-full h-auto" />
+                                    {msg.content && <p>{msg.content}</p>}
+                                  </div>
+                                ) : (
+                                  <p>{msg.content}</p>
+                                )}
+                              </div>
+                              <div
+                                className={`flex items-center mt-1 text-xs text-gray-400 ${
+                                  isUser ? "justify-end" : "justify-start"
+                                }`}
+                              >
+                                <span>{formatMessageTime(msg.timestamp)}</span>
+                                {isUser && (
+                                  <span className="ml-1">
+                                    {msg.isRead ? (
+                                      <CheckCheck className="h-3 w-3 text-blue-500" />
+                                    ) : (
+                                      <Check className="h-3 w-3 text-gray-400" />
+                                    )}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div
-                              className={`flex items-center mt-1 text-xs text-gray-400 ${
-                                isUser ? "justify-end" : "justify-start"
-                              }`}
-                            >
-                              <span>{formatMessageTime(msg.timestamp)}</span>
-                              {isUser && (
-                                <span className="ml-1">
-                                  {msg.isRead ? (
-                                    <CheckCheck className="h-3 w-3 text-blue-500" />
-                                  ) : (
-                                    <Check className="h-3 w-3 text-gray-400" />
-                                  )}
-                                </span>
-                              )}
+                          </motion.div>
+                        );
+                      })}
+                      {isTyping && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="flex justify-start"
+                        >
+                          <div className="bg-gray-800 rounded-2xl px-4 py-2">
+                            <div className="flex space-x-1">
+                              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })
+                        </motion.div>
+                      )}
+                    </>
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center text-center p-6">
                       <div className="bg-gray-800/50 rounded-full p-4 mb-4">
-                        <Heart className="h-8 w-8 text-rose-600" />
+                        <MessageSquare className="h-8 w-8 text-rose-600" />
                       </div>
                       <h3 className="text-xl font-bold mb-2">Nuevo match con {activeMatch.name}</h3>
                       <p className="text-gray-400 mb-6 max-w-md">
@@ -683,7 +714,7 @@ export default function MessagesPage() {
                       <Input
                         placeholder="Escribe un mensaje..."
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={handleTyping}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
@@ -794,7 +825,7 @@ export default function MessagesPage() {
                           size="icon"
                           className="text-gray-400 hover:text-white hover:bg-gray-800"
                         >
-                          <MoreVertical className="h-5 w-5" />
+                          <User className="h-5 w-5" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-56 bg-gray-900 border-gray-800 text-white p-0">
@@ -806,13 +837,6 @@ export default function MessagesPage() {
                           >
                             <User className="h-4 w-4 mr-2" />
                             Ver perfil
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start text-left hover:bg-gray-800"
-                          >
-                            <Heart className="h-4 w-4 mr-2" />
-                            Añadir a favoritos
                           </Button>
                           <Button
                             variant="ghost"
@@ -837,59 +861,83 @@ export default function MessagesPage() {
                     </div>
                   )}
                   {activeConversation.length > 0 ? (
-                    activeConversation.map((msg, index) => {
-                      const isUser = msg.senderId === userId;
-                      const showAvatar =
-                        !isUser && (index === 0 || activeConversation[index - 1].senderId !== msg.senderId);
+                    <>
+                      {activeConversation.map((msg, index) => {
+                        const isUser = msg.senderId === userId;
+                        const showAvatar =
+                          !isUser && (index === 0 || activeConversation[index - 1].senderId !== msg.senderId);
 
-                      return (
-                        <div key={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-                          {!isUser && showAvatar && (
-                            <Avatar className="h-8 w-8 mr-2 mt-1">
-                              <AvatarImage src={activeMatch?.image} alt={activeMatch?.name} />
-                              <AvatarFallback>{activeMatch?.name?.charAt(0) || "?"}</AvatarFallback>
-                            </Avatar>
-                          )}
-                          {!isUser && !showAvatar && <div className="w-10" />}
-                          <div className={`max-w-[70%] ${isUser ? "order-1" : "order-2"}`}>
-                            <div
-                              className={`rounded-2xl px-4 py-2 inline-block ${
-                                isUser ? "bg-rose-600 text-white rounded-br-none" : "bg-gray-800 text-white rounded-bl-none"
-                              }`}
-                            >
-                              {msg.image ? (
-                                <div className="space-y-2">
-                                  <img src={msg.image} alt="Imagen compartida" className="rounded-lg max-w-full h-auto" />
-                                  {msg.content && <p>{msg.content}</p>}
-                                </div>
-                              ) : (
-                                <p>{msg.content}</p>
-                              )}
+                        return (
+                          <motion.div
+                            key={msg.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                          >
+                            {!isUser && showAvatar && (
+                              <Avatar className="h-8 w-8 mr-2 mt-1">
+                                <AvatarImage src={activeMatch?.image} alt={activeMatch?.name} />
+                                <AvatarFallback>{activeMatch?.name?.charAt(0) || "?"}</AvatarFallback>
+                              </Avatar>
+                            )}
+                            {!isUser && !showAvatar && <div className="w-10" />}
+                            <div className={`max-w-[70%] ${isUser ? "order-1" : "order-2"}`}>
+                              <div
+                                className={`rounded-2xl px-4 py-2 inline-block ${
+                                  isUser ? "bg-rose-600 text-white rounded-br-none" : "bg-gray-800 text-white rounded-bl-none"
+                                }`}
+                              >
+                                {msg.image ? (
+                                  <div className="space-y-2">
+                                    <img src={msg.image} alt="Imagen compartida" className="rounded-lg max-w-full h-auto" />
+                                    {msg.content && <p>{msg.content}</p>}
+                                  </div>
+                                ) : (
+                                  <p>{msg.content}</p>
+                                )}
+                              </div>
+                              <div
+                                className={`flex items-center mt-1 text-xs text-gray-400 ${
+                                  isUser ? "justify-end" : "justify-start"
+                                }`}
+                              >
+                                <span>{formatMessageTime(msg.timestamp)}</span>
+                                {isUser && (
+                                  <span className="ml-1">
+                                    {msg.isRead ? (
+                                      <CheckCheck className="h-3 w-3 text-blue-500" />
+                                    ) : (
+                                      <Check className="h-3 w-3 text-gray-400" />
+                                    )}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div
-                              className={`flex items-center mt-1 text-xs text-gray-400 ${
-                                isUser ? "justify-end" : "justify-start"
-                              }`}
-                            >
-                              <span>{formatMessageTime(msg.timestamp)}</span>
-                              {isUser && (
-                                <span className="ml-1">
-                                  {msg.isRead ? (
-                                    <CheckCheck className="h-3 w-3 text-blue-500" />
-                                  ) : (
-                                    <Check className="h-3 w-3 text-gray-400" />
-                                  )}
-                                </span>
-                              )}
+                          </motion.div>
+                        );
+                      })}
+                      {isTyping && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="flex justify-start"
+                        >
+                          <div className="bg-gray-800 rounded-2xl px-4 py-2">
+                            <div className="flex space-x-1">
+                              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })
+                        </motion.div>
+                      )}
+                    </>
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center text-center p-6">
                       <div className="bg-gray-800/50 rounded-full p-4 mb-4">
-                        <Heart className="h-8 w-8 text-rose-600" />
+                        <MessageSquare className="h-8 w-8 text-rose-600" />
                       </div>
                       <h3 className="text-xl font-bold mb-2">Nuevo match con {activeMatch?.name}</h3>
                       <p className="text-gray-400 mb-6 max-w-md">
@@ -935,7 +983,7 @@ export default function MessagesPage() {
                       <Input
                         placeholder="Escribe un mensaje..."
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={handleTyping}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
@@ -1029,16 +1077,6 @@ export default function MessagesPage() {
                       ) : (
                         <p className="text-gray-400 text-sm">No hay intereses en común.</p>
                       )}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-start space-x-2">
-                      <Calendar className="h-5 w-5 text-gray-400 mt-1" />
-                      <p className="text-xs text-gray-400">Se unió hace 2 semanas</p>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <MapPin className="h-5 w-5 text-gray-400 mt-1" />
-                      <p className="text-xs text-gray-400">A 5 km de distancia</p>
                     </div>
                   </div>
                   <Button
