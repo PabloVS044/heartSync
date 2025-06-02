@@ -27,8 +27,21 @@ export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0);
+  const [comicMode, setComicMode] = useState(false);
 
-  // Detectar scroll para cambiar el estilo del header
+  const comicPhrases = [
+    "¡Lánzate al amor!",
+    "¡Dale un corazón épico!",
+    "¡Atrévete o quédate forever alone!",
+    "¡Cupidazo incoming!",
+  ];
+
+  const getRandomPhrase = () => comicPhrases[Math.floor(Math.random() * comicPhrases.length)];
+
+  const toggleComicMode = () => {
+    setComicMode(!comicMode);
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -37,7 +50,6 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Testimonios
   const testimonials = [
     {
       name: "María",
@@ -62,7 +74,6 @@ export default function LandingPage() {
     },
   ];
 
-  // Cambiar testimonio automáticamente cada 5 segundos
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveTestimonialIndex((prev) => (prev + 1) % testimonials.length);
@@ -70,14 +81,12 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [testimonials.length]);
 
-  // Estadísticas
   const stats = [
     { value: "10K+", label: "Usuarios activos" },
     { value: "85%", label: "Tasa de éxito" },
     { value: "4.8", label: "Calificación promedio" },
   ];
 
-  // Función para manejar la navegación
   const handleNavigation = (e, id) => {
     e.preventDefault();
     const element = document.getElementById(id);
@@ -87,21 +96,50 @@ export default function LandingPage() {
     setMobileMenuOpen(false);
   };
 
-  // Función para manejar el registro
   const handleRegister = (e) => {
     e.preventDefault();
     window.location.href = "/registro";
   };
 
-  // Función para manejar el login
   const handleLogin = (e) => {
     e.preventDefault();
     window.location.href = "/login";
   };
 
+  const CountdownTimer = ({ targetDate }) => {
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        const now = new Date();
+        const target = new Date(targetDate);
+        const diff = target - now;
+        if (diff <= 0) {
+          clearInterval(interval);
+          return;
+        }
+        setTimeLeft({
+          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((diff % (1000 * 60)) / 1000),
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }, [targetDate]);
+
+    return (
+      <div className="flex justify-center gap-4">
+        <div>{timeLeft.days}d</div>
+        <div>{timeLeft.hours}h</div>
+        <div>{timeLeft.minutes}m</div>
+        <div>{timeLeft.seconds}s</div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      {/* Header */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 border-b border-gray-700 transition-all duration-300 ${
           isScrolled
@@ -116,8 +154,6 @@ export default function LandingPage() {
             </div>
             <span className="font-bold text-xl text-gray-100">HeartSync</span>
           </a>
-
-          {/* Navegación desktop */}
           <nav className="hidden md:flex items-center space-x-8">
             <a
               href="#como-funciona"
@@ -148,7 +184,6 @@ export default function LandingPage() {
               FAQ
             </a>
           </nav>
-
           <div className="hidden md:flex items-center space-x-4">
             <Button
               size="sm"
@@ -164,9 +199,13 @@ export default function LandingPage() {
             >
               Registrarse
             </Button>
+            <Button
+              onClick={toggleComicMode}
+              className="ml-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full"
+            >
+              {comicMode ? "Desactivar Modo Cómico 😜" : "Activar Modo Cómico 😜"}
+            </Button>
           </div>
-
-          {/* Botón menú móvil */}
           <Button
             variant="ghost"
             size="icon"
@@ -180,8 +219,6 @@ export default function LandingPage() {
             )}
           </Button>
         </div>
-
-        {/* Menú móvil */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-gray-800 border-t border-gray-700 py-4">
             <div className="container mx-auto px-4 flex flex-col space-y-4">
@@ -227,16 +264,20 @@ export default function LandingPage() {
                   className="bg-rose-600 hover:bg-rose-700 text-white"
                   onClick={handleRegister}
                 >
-                  Registrarse
+                  {comicMode ? getRandomPhrase() : "Registrarse"}
+                </Button>
+                <Button
+                  onClick={toggleComicMode}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  {comicMode ? "Desactivar Modo Cómico 😜" : "Activar Modo Cómico 😜"}
                 </Button>
               </div>
             </div>
           </div>
         )}
       </header>
-
       <main className="pt-16">
-        {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-b from-gray-900 to-gray-800 py-20 md:py-32">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -250,14 +291,13 @@ export default function LandingPage() {
                 <p className="text-lg text-gray-400 mb-8">
                   HeartSync conecta mujeres mayores con hombres más jóvenes, creando relaciones significativas basadas en intereses comunes, respeto mutuo y química real.
                 </p>
-
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
                   <Button
                     size="lg"
                     className="bg-rose-600 hover:bg-rose-700 rounded-full group text-white"
                     onClick={handleRegister}
                   >
-                    Comenzar ahora
+                    {comicMode ? getRandomPhrase() : "Comenzar ahora"}
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
                   <Button
@@ -269,7 +309,6 @@ export default function LandingPage() {
                     Cómo funciona
                   </Button>
                 </div>
-
                 <div className="flex items-center space-x-4">
                   <div className="flex -space-x-2">
                     {[1, 2, 3, 4].map((i) => (
@@ -287,7 +326,6 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-
               <div className="relative">
                 <div className="absolute -inset-4 bg-gradient-to-r from-rose-500/20 to-purple-500/20 rounded-2xl blur-xl"></div>
                 <div className="relative bg-gray-800 rounded-2xl overflow-hidden shadow-xl">
@@ -300,25 +338,35 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-
-          {/* Estadísticas */}
           <div className="container mx-auto px-4 mt-16">
             <div className="bg-gray-800 rounded-2xl shadow-lg p-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {stats.map((stat, index) => (
-                  <div key={index} className="text-center">
-                    <div className="text-3xl md:text-4xl font-bold text-rose-400 mb-2">
-                      {stat.value}
-                    </div>
-                    <p className="text-gray-400">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
+              <h3 className="text-2xl font-bold text-center mb-6 text-gray-100">Nuestras Estadísticas</h3>
+              <canvas id="stats-chart" height="200"></canvas>
+              ```chartjs
+              {
+                "type": "bar",
+                "data": {
+                  "labels": ["Usuarios Activos", "Tasa de Éxito", "Calificación"],
+                  "datasets": [{
+                    "label": "Estadísticas",
+                    "data": [10000, 85, 4.8],
+                    "backgroundColor": ["#f43f5e", "#f43f5e", "#f43f5e"],
+                    "borderColor": ["#1f2937", "#1f2937", "#1f2937"],
+                    "borderWidth": 1
+                  }]
+                },
+                "options": {
+                  "scales": {
+                    "y": { "beginAtZero": true, "ticks": { "color": "#ffffff" } },
+                    "x": { "ticks": { "color": "#ffffff" } }
+                  },
+                  "plugins": { "legend": { "display": false } }
+                }
+              }
+              ```
             </div>
           </div>
         </section>
-
-        {/* Cómo Funciona */}
         <section id="como-funciona" className="py-20 bg-gray-900">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
@@ -332,7 +380,6 @@ export default function LandingPage() {
                 Hemos creado una plataforma intuitiva que facilita encontrar conexiones auténticas entre mujeres mayores y hombres más jóvenes.
               </p>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
@@ -370,8 +417,6 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-
-        {/* Beneficios */}
         <section id="beneficios" className="py-20 bg-gray-800">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
@@ -385,7 +430,6 @@ export default function LandingPage() {
                 Nuestra plataforma está diseñada específicamente para crear conexiones significativas entre mujeres mayores y hombres más jóvenes.
               </p>
             </div>
-
             <Tabs defaultValue="mujeres" className="max-w-4xl mx-auto">
               <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-700">
                 <TabsTrigger
@@ -401,7 +445,6 @@ export default function LandingPage() {
                   Para Hombres
                 </TabsTrigger>
               </TabsList>
-
               <TabsContent value="mujeres" className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {[
@@ -446,7 +489,6 @@ export default function LandingPage() {
                   ))}
                 </div>
               </TabsContent>
-
               <TabsContent value="hombres" className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {[
@@ -494,8 +536,6 @@ export default function LandingPage() {
             </Tabs>
           </div>
         </section>
-
-        {/* Testimonios */}
         <section id="testimonios" className="py-20 bg-gray-900">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
@@ -509,7 +549,6 @@ export default function LandingPage() {
                 Descubre cómo HeartSync ha transformado la vida de nuestros usuarios creando conexiones significativas.
               </p>
             </div>
-
             <div className="max-w-3xl mx-auto">
               <Card className="border-none shadow-xl bg-gradient-to-br from-rose-900 to-gray-800">
                 <CardContent className="p-8">
@@ -557,201 +596,4 @@ export default function LandingPage() {
                           className={`w-3 h-3 rounded-full transition-colors ${
                             index === activeTestimonialIndex
                               ? "bg-rose-400"
-                              : "bg-gray-600"
-                          }`}
-                          aria-label={`Ver testimonio ${index + 1}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Preguntas frecuentes */}
-        <section id="preguntas" className="py-20 bg-gray-800">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <Badge className="mb-4 bg-rose-900 text-rose-300 hover:bg-rose-800 transition-colors">
-                Preguntas frecuentes
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-100">
-                Resolvemos tus dudas
-              </h2>
-              <p className="text-lg text-gray-400">
-                Encuentra respuestas a las preguntas más comunes sobre HeartSync.
-              </p>
-            </div>
-
-            <div className="max-w-3xl mx-auto">
-              <Accordion type="single" collapsible className="space-y-4">
-                {[
-                  {
-                    question: "¿Cómo funciona el algoritmo de compatibilidad?",
-                    answer:
-                      "Nuestro algoritmo analiza tus preferencias, intereses y comportamiento en la plataforma para sugerirte perfiles con alta probabilidad de compatibilidad. Consideramos factores como valores compartidos, intereses comunes y objetivos de relación similares.",
-                  },
-                  {
-                    question: "¿Es seguro usar HeartSync?",
-                    answer:
-                      "Absolutamente. La seguridad es nuestra prioridad. Verificamos todos los perfiles, utilizamos encriptación de extremo a extremo en nuestros chats y nunca compartimos tu información personal con terceros. Además, ofrecemos herramientas para reportar comportamientos inapropiados.",
-                  },
-                  {
-                    question: "¿Cuál es el rango de edad de los usuarios?",
-                    answer:
-                      "HeartSync está diseñado para mujeres mayores de 35 años y hombres mayores de 25 años. La mayoría de nuestras usuarias femeninas tienen entre 40-55 años, mientras que nuestros usuarios masculinos suelen tener entre 28-40 años.",
-                  },
-                  {
-                    question: "¿Puedo usar HeartSync gratis?",
-                    answer:
-                      "Sí, ofrecemos una versión gratuita que te permite crear un perfil, explorar y conectar con otros usuarios. Para funciones premium como filtros avanzados, mensajes ilimitados y ver quién te ha dado like, ofrecemos suscripciones mensuales a precios accesibles.",
-                  },
-                  {
-                    question: "¿Cómo se diferencia HeartSync de otras apps de citas?",
-                    answer:
-                      "HeartSync es la única plataforma diseñada específicamente para conectar mujeres mayores con hombres más jóvenes. Nuestro enfoque está en crear conexiones significativas basadas en la compatibilidad real, no solo en la apariencia física.",
-                  },
-                ].map((faq, index) => (
-                  <AccordionItem
-                    key={index}
-                    value={`item-${index}`}
-                    className="bg-gray-800 rounded-lg shadow-md"
-                  >
-                    <AccordionTrigger className="px-6 py-4 hover:no-underline text-gray-100">
-                      <span className="text-left font-medium">{faq.question}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-6 pb-4 pt-2 text-gray-400">
-                      {faq.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="py-20 bg-gradient-to-br from-rose-600 to-rose-800 text-white">
-          <div className="container mx-auto px-4 text-center">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-100">
-                Comienza tu historia hoy
-              </h2>
-              <p className="text-xl mb-8 opacity-90 text-gray-200">
-                Únete a miles de personas que ya han encontrado conexiones significativas en HeartSync.
-              </p>
-              <Button
-                size="lg"
-                className="bg-gray-800 text-rose-400 hover:bg-gray-700 rounded-full shadow-lg group"
-                onClick={handleRegister}
-              >
-                Crear cuenta gratis
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Button>
-              <p className="mt-4 text-sm opacity-80 text-gray-300">
-                No se requiere tarjeta de crédito. Cancela cuando quieras.
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="bg-gray-950 text-gray-100 pt-16 pb-8">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            <div>
-              <a href="/" className="flex items-center space-x-2 mb-6">
-                <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-rose-700 rounded-md flex items-center justify-center">
-                  <Heart className="h-5 w-5 text-white" fill="white" />
-                </div>
-                <span className="font-bold text-xl text-gray-100">HeartSync</span>
-              </a>
-              <p className="text-gray-400 mb-6">
-                Conectando corazones, creando historias significativas entre generaciones.
-              </p>
-              <div className="flex space-x-4">
-                {["twitter", "facebook", "instagram", "linkedin"].map((social) => (
-                  <a
-                    key={social}
-                    href={`#${social}`}
-                    className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors"
-                  >
-                    <span className="sr-only">{social}</span>
-                    {/* Aquí irían los iconos de redes sociales */}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-lg mb-4 text-gray-100">Compañía</h4>
-              <ul className="space-y-3">
-                {["Sobre Nosotros", "Equipo", "Carreras", "Blog", "Prensa"].map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-gray-400 hover:text-rose-400 transition-colors"
-                    >
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-lg mb-4 text-gray-100">Legal</h4>
-              <ul className="space-y-3">
-                {[
-                  "Términos de Servicio",
-                  "Política de Privacidad",
-                  "Cookies",
-                  "Licencias",
-                  "Configuración de Privacidad",
-                ].map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-gray-400 hover:text-rose-400 transition-colors"
-                    >
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-lg mb-4 text-gray-100">Soporte</h4>
-              <ul className="space-y-3">
-                {[
-                  "Centro de Ayuda",
-                  "Contacto",
-                  "FAQ",
-                  "Comunidad",
-                  "Guías de Uso",
-                ].map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-gray-400 hover:text-rose-400 transition-colors"
-                    >
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
-            <p>© {new Date().getFullYear()} HeartSync. Todos los derechos reservados.</p>
-            <p className="mt-2">Hecho con ❤️ para conexiones auténticas</p>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
+                              : "bg
