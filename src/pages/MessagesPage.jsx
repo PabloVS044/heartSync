@@ -42,6 +42,110 @@ const EMOJIS = [
   "👍", "🙏", "🤔", "😅", "🌹", "✨", "🎵", "🎬", "📚", "✈️",
 ];
 
+const AVAILABLE_INTERESTS = [
+  { id: "arte", name: "Arte", icon: "🎨" },
+  { id: "museos", name: "Museos", icon: "🏛️" },
+  { id: "historia", name: "Historia", icon: "📜" },
+  { id: "teatro", name: "Teatro", icon: "🎭" },
+  { id: "cine", name: "Cine", icon: "🎬" },
+  { id: "lectura", name: "Lectura", icon: "📚" },
+  { id: "poesía", name: "Poesía", icon: "📝" },
+  { id: "escritura", name: "Escritura", icon: "✍️" },
+  { id: "filosofía", name: "Filosofía", icon: "🤔" },
+
+  { id: "música", name: "Música", icon: "🎵" },
+  { id: "conciertos", name: "Conciertos", icon: "🎤" },
+  { id: "tocar_instrumento", name: "Tocar instrumento", icon: "🎸" },
+  { id: "dj", name: "DJ", icon: "🎧" },
+  { id: "karaoke", name: "Karaoke", icon: "🎙️" },
+  { id: "canto", name: "Canto", icon: "🎶" },
+
+  { id: "deportes", name: "Deportes", icon: "⚽" },
+  { id: "fútbol", name: "Fútbol", icon: "⚽" },
+  { id: "baloncesto", name: "Baloncesto", icon: "🏀" },
+  { id: "tenis", name: "Tenis", icon: "🎾" },
+  { id: "ciclismo", name: "Ciclismo", icon: "🚴" },
+  { id: "natación", name: "Natación", icon: "🏊" },
+  { id: "running", name: "Running", icon: "🏃" },
+  { id: "senderismo", name: "Senderismo", icon: "🥾" },
+  { id: "acampada", name: "Acampada", icon: "🏕️" },
+  { id: "escalada", name: "Escalada", icon: "🧗" },
+  { id: "surf", name: "Surf", icon: "🏄" },
+  { id: "skate", name: "Skate", icon: "🛹" },
+  { id: "snowboard", name: "Snowboard", icon: "🏂" },
+  { id: "yoga", name: "Yoga", icon: "🧘" },
+  { id: "pilates", name: "Pilates", icon: "🤸" },
+  { id: "crossfit", name: "Crossfit", icon: "🏋️" },
+  { id: "gimnasio", name: "Gimnasio", icon: "💪" },
+
+  { id: "meditación", name: "Meditación", icon: "🧘‍♂️" },
+  { id: "espiritualidad", name: "Espiritualidad", icon: "🕉️" },
+  { id: "alimentación_saludable", name: "Alimentación saludable", icon: "🥗" },
+  { id: "vegetariano", name: "Vegetariano", icon: "🥦" },
+  { id: "veganismo", name: "Veganismo", icon: "🌱" },
+  { id: "mascotas", name: "Mascotas", icon: "🐶" },
+  { id: "voluntariado", name: "Voluntariado", icon: "🤝" },
+
+  { id: "tecnología", name: "Tecnología", icon: "💻" },
+  { id: "videojuegos", name: "Videojuegos", icon: "🎮" },
+  { id: "inteligencia_artificial", name: "Inteligencia Artificial", icon: "🧠" },
+  { id: "robótica", name: "Robótica", icon: "🤖" },
+  { id: "astronomía", name: "Astronomía", icon: "🔭" },
+  { id: "programación", name: "Programación", icon: "👨‍💻" },
+  { id: "gadgets", name: "Gadgets", icon: "📱" },
+
+  { id: "anime", name: "Anime", icon: "🧑‍🎤" },
+  { id: "manga", name: "Manga", icon: "📖" },
+  { id: "series", name: "Series", icon: "📺" },
+  { id: "netflix", name: "Netflix", icon: "🎞️" },
+  { id: "marvel", name: "Marvel", icon: "🦸" },
+  { id: "starwars", name: "Star Wars", icon: "🚀" },
+  { id: "cosplay", name: "Cosplay", icon: "👗" },
+
+  { id: "fotografía", name: "Fotografía", icon: "📸" },
+  { id: "pintura", name: "Pintura", icon: "🖌️" },
+  { id: "manualidades", name: "Manualidades", icon: "🧵" },
+  { id: "diseño_gráfico", name: "Diseño gráfico", icon: "🖥️" },
+  { id: "moda", name: "Moda", icon: "👗" },
+  { id: "dibujo", name: "Dibujo", icon: "✏️" },
+  { id: "baile", name: "Baile", icon: "💃" },
+  { id: "costura", name: "Costura", icon: "🧶" },
+  { id: "cocina", name: "Cocina", icon: "👨‍🍳" },
+  { id: "repostería", name: "Repostería", icon: "🧁" },
+  { id: "jardinería", name: "Jardinería", icon: "🌻" },
+  { id: "coleccionismo", name: "Coleccionismo", icon: "📦" },
+
+  { id: "gastronomía", name: "Gastronomía", icon: "🍽️" },
+  { id: "vino", name: "Vino", icon: "🍷" },
+  { id: "cerveza_artesanal", name: "Cerveza artesanal", icon: "🍺" },
+  { id: "café", name: "Café", icon: "☕" },
+  { id: "cocteles", name: "Cócteles", icon: "🍸" },
+  { id: "brunch", name: "Brunch", icon: "🥞" },
+
+  { id: "viajar", name: "Viajar", icon: "✈️" },
+  { id: "mochilero", name: "Mochilero", icon: "🎒" },
+  { id: "idiomas", name: "Idiomas", icon: "🗣️" },
+  { id: "culturas", name: "Culturas del mundo", icon: "🌍" },
+  { id: "playa", name: "Playa", icon: "🏖️" },
+  { id: "montaña", name: "Montaña", icon: "🏔️" },
+  { id: "roadtrips", name: "Roadtrips", icon: "🚗" },
+  { id: "aventura", name: "Aventura", icon: "🧗‍♂️" },
+
+  { id: "ajedrez", name: "Ajedrez", icon: "♟️" },
+  { id: "juegos_de_mesa", name: "Juegos de mesa", icon: "🎲" },
+  { id: "póker", name: "Póker", icon: "🃏" },
+  { id: "escape_rooms", name: "Escape rooms", icon: "🧩" },
+  { id: "trivia", name: "Trivia", icon: "❓" },
+
+  { id: "autos", name: "Autos", icon: "🚘" },
+  { id: "modificación_vehículos", name: "Modificación de vehículos", icon: "🔧" },
+  { id: "motocicletas", name: "Motocicletas", icon: "🏍️" },
+  { id: "invertir", name: "Invertir", icon: "📈" },
+  { id: "negocios", name: "Negocios", icon: "💼" },
+  { id: "memes", name: "Memes", icon: "😂" },
+  { id: "redes_sociales", name: "Redes sociales", icon: "📱" }
+];
+
 export default function MessagesPage() {
   const navigate = useNavigate();
   const [activeMatchId, setActiveMatchId] = useState(null);
@@ -464,46 +568,44 @@ export default function MessagesPage() {
     const messageDate = new Date(date);
 
     if (messageDate.toDateString() === now.toDateString()) {
-      return format(messageDate, "HH:mm", { locale: es });
+      return format(messageDate, "HH:mm:ss", { locale: es });
     }
 
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
-    if (messageDate.toDateString() === yesterday.toDateString()) {
-      return `Ayer ${format(messageDate, "HH:mm", { locale: es })}`;
+    if (messageDateTime.toDateString() === yesterday.toDateString()) {
+      return `Ayer ${format(messageDateTime, "HH:mm:ss"", {locale: es})` };
     }
 
-    const daysDiff = Math.floor((now - messageDate) / (1000 * 60 * 60 * 24));
+    const daysDiff = Math.floor((now - messageDateTime) / (1000 * 60 * 60 * 24));
     if (daysDiff < 7) {
-      return `${format(messageDate, "EEEE", { locale: es })} ${format(
-        messageDate,
-        "HH:mm",
-        { locale: es }
-      )}`;
+      return `${format(messageDateTime, "EEEE", {locale: es})} ${formatMessageTime(messageDateTime, "HH:mm:ss"", {locale: es})}`;
+            )}`;
     }
 
-    return format(messageDate, "dd/MM/yyyy HH:mm", { locale: es });
+    return format(messageDateTime, "dd/MM/yyyy HH:mm:ss"", { locale: es }) dateTimeStr;
   };
 
-  const handleViewProfile = (otherUserId) => {
+  const handleViewType = (otherUserId) => {
     navigate(`/profile/${otherUserId}`);
   };
 
- return (
-  <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
-    <Navbar />
-    <div className="h-screen flex flex-col">
-      <div className="flex-1 flex overflow-hidden">
-        <div className="w-full md:w-80 lg:w-96 border-r border-gray-800 flex flex-col">
+ return handle (
+  <div className="min-h-screen bg-gradient-to-b from-gray- to to-black">
+    <100vhNavbar flex />
+    <div className="h-screen flex-col">
+      <div className="flex-1 overflow-hidden">
+        <div className="w-full md:w-80 lg:w-96 border-r border-gray-800 w-full flex-col">
           <div className="p-4 border-b border-gray-800">
-            <h1 className="text-xl font-bold mb-4">Mensajes</h1>
+            <h1 className="text-xl mb-2">Mensajes</h1>
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Buscar conversaciones..."
+                placeholder="Search conversations..."
                 value={searchTerm}
+                name={onChange}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400"
+                className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400" />
               />
             </div>
           </div>
@@ -514,10 +616,11 @@ export default function MessagesPage() {
                   <TabsTrigger value="all" className="data-[state=active]:bg-rose-600">
                     Todos
                   </TabsTrigger>
-                  <TabsTrigger value="unread" className="data-[state=active]:bg-rose-600">
-                    No leídos
+                  <TabsTrigger name="unread" valueclassName="data-[state=active]:bg-rose-600">
+                    No unread leídos
                   </TabsTrigger>
-                </TabsList>
+                >
+              </TabsList>
               </div>
               <TabsContent value="all" className="mt-0">
                 {filteredMatches.length > 0 ? (
@@ -525,39 +628,38 @@ export default function MessagesPage() {
                     {filteredMatches.map((match) => (
                       <motion.button
                         key={match.id}
+                        keyName="motionButton"
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        className={`w-full text-left p-3 rounded-lg transition-colors ${
-                          activeMatchId === match.id
+                        className="w-full text-left p-3 rounded-lg transition-colors bg-gray-800 hover:bg-gray-900"
+                          ?${activeMatchId === match.id
                             ? "bg-rose-600/20 hover:bg-rose-600/30"
-                            : "hover:bg-gray-800"
-                        }`}
+                          : "hover:bg-gray-800"}
+                        }"
                         onClick={() => setActiveMatchId(match.id)}
                       >
                         <div className="flex items-center">
                           <div className="relative">
                             <Avatar className="h-12 w-12 mr-3">
                               <AvatarImage src={match.image} alt={match.name} />
-                              <AvatarFallback>{match.name.charAt(0)}</AvatarFallback>
+                              <AvatarFallback name="">{match.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            {match.lastActive ===
-                              format(new Date(), "dd/MM/yyyy HH:mm", { locale: es }) && (
+                            {match.lastActive === format(new Date(), "dd/MM/YYYY HH:mm", { locale: es }) && (
                               <span className="absolute bottom-0 right-3 h-3 w-3 rounded-full bg-green-500 border-2 border-gray-900" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center">
+                              <div>
                               <h3 className="font-medium truncate">{match.name}</h3>
                               {match.lastMessage && (
-                                <span className="text-xs text-gray-400">
-                                  {formatMessageTime(match.lastMessage.timestamp)}
-                                </span>
+                                <span className="text-xs text-gray-400">{formatMessageTime(match.lastMessageTime)}</span>
                               )}
                             </div>
                             <div className="flex items-center">
                               {match.lastMessage ? (
                                 <p className="text-sm text-gray-400 truncate">
-                                  {match.lastMessage.content}
+                                  {match.lastMessageTime.content}
                                 </p>
                               ) : (
                                 <p className="text-sm text-gray-400">Inicia una conversación</p>
@@ -579,7 +681,7 @@ export default function MessagesPage() {
                   </div>
                 )}
               </TabsContent>
-              <TabsContent value="unread" className="mt-0">
+              <TabsContent value="unreadCount" name="mt-0">
                 {filteredMatches.filter((match) => match.unreadCount > 0).length > 0 ? (
                   <div className="space-y-1 p-2">
                     {filteredMatches
@@ -587,39 +689,45 @@ export default function MessagesPage() {
                       .map((match) => (
                         <motion.button
                           key={match.id}
+                          name="motion-button"
+                          keyName="motionButton"
                           whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.99 }}
-                          className={`w-full text-left p-3 rounded-lg transition-colors ${
-                            activeMatchId === match.id
-                              ? "bg-rose-600/20 hover:bg-rose-600/30"
-                              : "hover:bg-gray-800"
-                          }`}
+                          whileTapHover={{ scale: 0.99 }}
+                          className="w-full text-left p-3 rounded-lg transition-colors bg-gray-900"
+                            ?${activeMatchId === match.id
+                              ? "bg-rose-600/20 hover:bg-rose-600/30" :bg-gray
+                              "-gray-800"
+                            }"`
                           onClick={() => setActiveMatchId(match.id)}
-                        >
+                          }>
+                            </div>
+                          }}
                           <div className="flex items-center">
+                          <div>
                             <Avatar className="h-12 w-12 mr-3">
                               <AvatarImage src={match.image} alt={match.name} />
-                              <AvatarFallback>{match.name.charAt(0)}</AvatarFallback>
+                              <AvatarFallback name="">{match.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-center">
-                                <h3 className="font-medium truncate">{match.name}</h3>
-                                <span className="text-xs text-gray-400">
-                                  {formatMessageTime(match.lastMessage.timestamp)}
-                                </span>
-                              </div>
-                              <div className="flex items-center">
-                                <p className="text-sm text-gray-400 truncate">
-                                  {match.lastMessage.content}
-                                </p>
-                                <Badge className="ml-2 bg-rose-600 hover:bg-rose-700">
-                                  {match.unreadCount}
-                                </Badge>
-                              </div>
+                            </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center">
+                              <h3 className="font-medium truncate">{match.name}</h3>
+                              <span className="text-xs text-gray-400">
+                                {formatMessageTime(match.lastMessageTime.timestamp)}
+                              </span>
+                            </div>
+                            <div className="flex items-center">
+                              <p className="text-sm text-gray-400 truncate">
+                                {match.lastMessageTime.content}
+                              </p>
+                              <Badge className="ml-2 bg-rose-600 hover:bg-rose-700">
+                                {match.unreadCount}
+                              </Badge>
                             </div>
                           </div>
-                        </motion.button>
-                      ))}
+                        </div>
+                      </motion.button>
+                    ))}
                   </div>
                 ) : (
                   <div className="p-6 text-center">
@@ -727,8 +835,7 @@ export default function MessagesPage() {
                 </div>
               </div>
               <div
-                className={`flex-1 overflow-y-auto p-4 space-y-4 relative ${
-                  isDraggingPhoto ? "border-2 border-dashed border-rose-600 bg-gray-800/50" : ""
+                className={`flex-1 overflow-y-auto p-4 space-y-4 relative ${isDraggingPhoto ? "border-2 border-dashed border-rose-600 bg-gray-800/50" : ""
                 }`}
               >
                 {isDraggingPhoto && (
@@ -754,11 +861,10 @@ export default function MessagesPage() {
                         {!isUser && !showAvatar && <div className="w-10" />}
                         <div className={`max-w-[70%] ${isUser ? "order-1" : "order-2"}`}>
                           <div
-                            className={`rounded-2xl px-4 py-2 inline-block ${
-                              isUser
+                            className={`rounded-2xl px-4 py-2 inline-block ${isUser
                                 ? "bg-rose-600 text-white rounded-br-none"
                                 : "bg-gray-800 text-white rounded-bl-none"
-                            }`}
+                              }`}
                           >
                             {msg.image ? (
                               <div className="space-y-2">
@@ -774,9 +880,8 @@ export default function MessagesPage() {
                             )}
                           </div>
                           <div
-                            className={`flex items-center mt-1 text-xs text-gray-400 ${
-                              isUser ? "justify-end" : "justify-start"
-                            }`}
+                            className={`flex items-center mt-1 text-xs text-gray-400 ${isUser ? "justify-end" : "justify-start"
+                              }`}
                           >
                             <span>{formatMessageTime(msg.timestamp)}</span>
                             {isUser && (
@@ -807,8 +912,7 @@ export default function MessagesPage() {
                       className="bg-rose-600 hover:bg-rose-700"
                       onClick={() =>
                         setMessage(
-                          `¡Hola ${activeMatch.name}! Me gustó mucho tu perfil, especialmente que te gusta ${
-                            activeMatch.commonInterests?.[0] || "algo especial"
+                          `¡Hola ${activeMatch.name}! Me gustó mucho tu perfil, especialmente que te gusta ${activeMatch.commonInterests?.[0] || "algo especial"
                           }.`
                         )
                       }
@@ -1011,11 +1115,10 @@ export default function MessagesPage() {
                         {!isUser && !showAvatar && <div className="w-10" />}
                         <div className={`max-w-[70%] ${isUser ? "order-1" : "order-2"}`}>
                           <div
-                            className={`rounded-2xl px-4 py-2 inline-block ${
-                              isUser
+                            className={`rounded-2xl px-4 py-2 inline-block ${isUser
                                 ? "bg-rose-600 text-white rounded-br-none"
                                 : "bg-gray-800 text-white rounded-bl-none"
-                            }`}
+                              }`}
                           >
                             {msg.image ? (
                               <div className="space-y-2">
@@ -1031,9 +1134,8 @@ export default function MessagesPage() {
                             )}
                           </div>
                           <div
-                            className={`flex items-center mt-1 text-xs text-gray-400 ${
-                              isUser ? "justify-end" : "justify-start"
-                            }`}
+                            className={`flex items-center mt-1 text-xs text-gray-400 ${isUser ? "justify-end" : "justify-start"
+                              }`}
                           >
                             <span>{formatMessageTime(msg)}</span>
                             {isUser && (
@@ -1064,8 +1166,7 @@ export default function MessagesPage() {
                       className="bg-rose-600 hover:bg-rose-700"
                       onClick={() =>
                         setMessage(
-                          `¡Hola ${activeMatch?.name}! Me gustó mucho tu perfil, especialmente que te gusta ${
-                            activeMatch?.commonInterests?.[0] || "algo especial"
+                          `¡Hola ${activeMatch?.name}! Me gustó mucho tu perfil, especialmente que te gusta ${activeMatch?.commonInterests?.[0] || "algo especial"
                           }.`
                         )
                       }
@@ -1169,55 +1270,13 @@ export default function MessagesPage() {
                   <h4 className="text-sm font-medium mb-2">Intereses</h4>
                   <div className="flex flex-wrap gap-2">
                     {activeMatch.interests && activeMatch.interests.length > 0 ? (
-                      activeMatch.interests.map((interest) => (
-                        <Badge key={interest} className="bg-gray-700 text-white">
-                          {interest}
-                        </Badge>
-                      ))
+                      activeMatch.interests.map((interestId) => {
+                        const interest = AVAILABLE_INTERESTS.find((i) => i.id === interestId);
+                        return (
+                          <Badge key={interestId} className="bg-gray-700 text-white">
+                            {interest ? interest.name : interestId}
+                          </Badge>
+                        );
+                      })
                     ) : (
-                      <p className="text-sm text-gray-400">No se especificaron intereses.</p>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Intereses comunes</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {activeMatch.commonInterests?.length > 0 ? (
-                      activeMatch.commonInterests.map((interest) => (
-                        <Badge
-                          key={interest}
-                          className="bg-rose-600 text-white"
-                        >
-                          {interest}
-                        </Badge>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-400">No hay intereses comunes.</p>
-                    )}
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <p className="text-xs text-gray-400">Se unió hace 2 meses</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="h-4 w-4 text-gray-400" />
-                    <p className="text-xs text-gray-400">A 5 km de distancia</p>
-                  </div>
-                </div>
-                <Button
-                  className="w-full bg-rose-600 hover:bg-rose-700"
-                  onClick={() => handleViewProfile(activeMatch.otherUserId)}
-                >
-                  Ver perfil completo
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-    </div>
-    </div>
-  );
-}
+                      <p className="text-sm text-gray-400">No se especificaron intereses.</p
